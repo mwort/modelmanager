@@ -1,8 +1,9 @@
 from setuptools import setup, find_packages
 from codecs import open
 from os import path
+import modelmanager
 
-__version__ = '0.0.1'
+__version__ = modelmanager.__version__
 
 here = path.abspath(path.dirname(__file__))
 
