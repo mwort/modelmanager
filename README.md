@@ -1,15 +1,17 @@
 modelmanager
 ===============================
 
-version number: 0.0.1
-author: Michel Wortmann
+Version number: 0.0.1
+Author: Michel Wortmann, Potsdam Institute of Climate Impact Research, Germany
 
 Overview
 --------
 
 A python package to manage your (scientific) model runs, input and output.
 
-Installation / Usage
+
+
+Installation
 --------------------
 
 To install use pip:
@@ -21,13 +23,16 @@ Or clone the repo:
 
     $ git clone https://github.com/mwort/modelmanager.git
     $ python setup.py install
-    
-Contributing
-------------
 
-TBD
+
+Usage
+-----
+
 
 Example
 -------
 
-TBD
+
+Contributing
+------------
+Ideas and feature requests are collected in IDEAS.md.
