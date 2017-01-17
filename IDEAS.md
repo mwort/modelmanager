@@ -6,15 +6,15 @@
     + check if all attributes are set for attached function:
         attr = re.findall(r"self\.(\w*)",inspect.getsource(funct))
     + call signiture: (self is Project instance)
-        dict = input(self, **writekwargs)
-        (pandas object or similar) = ouput(self, **options)
-        columtype = output(self, **options) for performance tables
+        `dict = input(self, **writekwargs)`
+        `(pandas object or similar) = ouput(self, **options)`
+        `columtype = output(self, **options)` for performance tables
     + how to link file paths to functions? in parameter file, in function defaults?
     + can be extended by user-defined file in addition to standard input/output files
 
 - postprocessing.py: functions to attach to Run class
     + call signiture:
-        anything = funct(self,**kwargs) whereas self is the Run instance
+        `anything = funct(self,**kwargs)` whereas self is the Run instance
     + maybe extended by postprocessing.py in resource dir
 
 - json parameter file
@@ -41,7 +41,7 @@
         + e.g. check names in parameter file exist
     + force mapset for run/evaluation output
 
-- get some inspiration from https://github.com/dtavan/PyBPS 
+- get some inspiration from https://github.com/dtavan/PyBPS and https://github.com/aerispaha/swmmio
 
 *Classes*
 
@@ -58,3 +58,11 @@
 - Run: line in runs table with some useful methods and attributes from other tables
 - Parameterset: line in parameter table, simple attribute class
 
+- initialisation script like Django:
+mminit myprojectname --interface=swim
+- help function showing all available input/output functions
+pro.help()
+- components:
+    core: settings and resources directory with defaults, interface functions, error checking, model input templates, run logging
+    swim interface: all interface functions for swim and default settings
+    front end: django or grass interface for run log interactions and possibly model i/o interface

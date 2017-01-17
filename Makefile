@@ -1,6 +1,13 @@
 
 .PHONY: update_docs clean
 
+clean:
+	python setup.py clean
+	rm -rf build/ dist/ *.egg-info
+	find modelmanager -name \*.pyc -delete
+
+
+# working dir should be clean (git)
 update_docs:
 	# build the docs
 	cd docs && make clean && make html
@@ -23,7 +30,3 @@ update_docs:
 
 	# switch back
 	git checkout master
-
-clean:
-	python setup.py clean
-	rm -rf build/ dist/ *.egg-info
