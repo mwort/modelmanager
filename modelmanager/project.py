@@ -24,7 +24,10 @@ class Project:
 
 
 def create_new_project(path, **parameters):
-
+    # create .mm directory
+    # make some defaults
+    # copy mmbrowser app
+    # run migrate to create db and populate with some defaults
 
 class Parameters:
 
@@ -34,4 +37,3 @@ class Parameters:
     def read(self):
 
     def write(self):
-        
