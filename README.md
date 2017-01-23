@@ -29,8 +29,23 @@ Or clone the repo:
     $ python setup.py install
 
 
+
 Usage
 -----
+
+Initialise project where in your model root directory:
+```
+cd home/mymodel
+python -m modelmanager init
+```
+Add some interface functions for your model in .mm/interface.py and register them:
+```
+python -m modelmanager update
+```
+Start the browser app:
+python -m modelmanager browser
+```
+Navigate to localhost/admin in your browser.
 
 
 Example
