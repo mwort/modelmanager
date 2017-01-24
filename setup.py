@@ -33,6 +33,7 @@ setup(
     ],
     keywords='',
     packages=find_packages(exclude=['docs', 'tests*']),
+    scripts=['modelmanager/scripts/modelmanager'],
     include_package_data=True,
     author='Michel Wortmann',
     install_requires=install_requires,
