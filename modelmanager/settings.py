@@ -5,7 +5,9 @@ management and validation of the project settings defined in the settings
 '''
 
 import json
-from os import path as ospath
+import os.path as osp
+import inspect
+
 
 class SettingsFile(object):
     '''
@@ -20,13 +22,17 @@ class SettingsFile(object):
     # define defaults here
     store_input_functions = []
     projectdir = '.'
-    settings_path = '.mm/settings.json'
+    resourcedir = '.mm'
+    settings_file = 'settings.json'
 
     def __init__(self, **override):
 
-        # define absolute to file
-        self.settings_path = ospath.abspath(ospath.join(self.projectdir,
-                                                        self.settings_path))
+        # make defaults instance variables
+        self.__dict__.update(self._getDefaults())
+
+        # define absolute path to file
+        spath = [self.projectdir, self.resourcedir, self.settings_file]
+        self.settings_path = osp.abspath(osp.join(*spath))
 
         # load settings from file
         try:
@@ -39,14 +45,20 @@ class SettingsFile(object):
 
         return
 
+    def _getDefaults(self):
+        att = {k: v
+               for k, v in inspect.getmembers(self.__class__)
+               if not (k.startswith('_') or hasattr(v, '__call__'))}
+        return att
+
     def _open_file(self, mode='r'):
-        if mode == 'r' and not self.exists:
+        if mode == 'r' and not self._fileExists:
             raise(IOError, 'Settings file does not exist: %s')
         return file(self.settings_path, mode)
 
     @property
-    def exists(self):
-        return ospath.exists(self.settings_path)
+    def _fileExists(self):
+        return osp.exists(self.settings_path)
 
     def save(self):
         json_str = str(self)
@@ -61,16 +73,18 @@ class SettingsFile(object):
         return
 
     def __str__(self):
+        return self.serialise()
+
+    def serialise(self):
         '''Default serialisation happens here via json.dumps'''
-        dump = self.__dict__.copy()
-        dump.pop('settings_path')
-        return json.dumps(dump, indent=1, sort_keys=True)
+        var = self.__dict__.copy()
+        var.pop('settings_path')
+        return json.dumps(var, indent=1, sort_keys=True)
 
     def __unicode__(self):
         return self.__str__()
 
     def __repr__(self):
-        rep = 'Settings:\n'
-        order = sorted(self.__dict__.keys())
-        rep += '\n'.join(['%s: %s' % (k, self.__dict__[k]) for k in order])
+        ppath = osp.abs(self.projectdir)
+        rep = '<modelmanager.settings.SettingsFile for %s' % ppath
         return rep
