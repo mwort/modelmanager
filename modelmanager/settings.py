@@ -24,6 +24,7 @@ class SettingsFile(object):
     projectdir = '.'
     resourcedir = '.mm'
     settings_file = 'settings.json'
+    neversave = ['settings_file', 'resourcedir', 'settings_file']
 
     def __init__(self, **override):
 
@@ -113,8 +114,9 @@ class SettingsFile(object):
         # make paths relative
         paths = self.checkPaths()
         var.update({k: self.relPath(v) for k, v in paths.items()})
-        # remove settings
-        var.pop('settings_path')
+        # remove those that should never be saved
+        for k in self.neversave:
+            var.pop(k)
         return json.dumps(var, indent=1, sort_keys=True)
 
     def __unicode__(self):
