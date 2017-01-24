@@ -1,14 +1,7 @@
+from settings import SettingsFile
 
 
-# default project parameters
-DEFAULTS = {
-,
-}
-
-
-class Project:
-
-    PARAMETERFILE = 'mm.json'
+class Project(object):
 
     def __init__(self, path='.', create=False, **parameters):
 
@@ -26,14 +19,8 @@ class Project:
 def create_new_project(path, **parameters):
     # create .mm directory
     # make some defaults
+    settings = SettingsFile()
+    settings.save()
+
     # copy mmbrowser app
     # run migrate to create db and populate with some defaults
-
-class Parameters:
-
-    def __init__(self, path):
-        self.path = path
-
-    def read(self):
-
-    def write(self):
