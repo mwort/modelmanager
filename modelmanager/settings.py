@@ -24,16 +24,16 @@ class SettingsFile(object):
     projectdir = '.'
     resourcedir = '.mm'
     settings_file = 'settings.json'
-    neversave = ['settings_file', 'resourcedir', 'settings_file']
+    neversave = ['settings_path', 'resourcedir', 'settings_file']
 
-    def __init__(self, **override):
+    def __init__(self, settings_path, **override):
 
         # make defaults instance variables
         self.__dict__.update(self._getDefaults())
 
-        # define absolute path to file
-        spath = [self.projectdir, self.resourcedir, self.settings_file]
-        self.settings_path = osp.abspath(osp.join(*spath))
+        # save settings paths
+        self.settings_path = settings_path
+        self.resourcedir = osp.dirname(settings_path)
 
         # load settings from file
         try:

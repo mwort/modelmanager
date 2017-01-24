@@ -15,12 +15,13 @@ from os import path as osp
 
 class Project(object):
 
-    def __init__(self, path='.', **settings):
+    def __init__(self, projectdir='.', **settings):
 
         # change into project dir
 
         # check resource dir exists
             # glob.glob(*/PARAMETERFILE)
+        sfp = glob(osp.join(projectdir, '*', SettingsFile.settings_file))
             # if 0, none exists
             # if > 1, take first and warn
             # if 1, just load
