@@ -51,7 +51,7 @@ class SettingsFile(object):
                if not (k.startswith('_') or hasattr(v, '__call__'))}
         return att
 
-    def _open_file(self, mode='r'):
+    def _openFile(self, mode='r'):
         if mode == 'r' and not self._fileExists:
             raise(IOError, 'Settings file does not exist: %s')
         return file(self.settings_path, mode)
@@ -60,8 +60,37 @@ class SettingsFile(object):
     def _fileExists(self):
         return osp.exists(self.settings_path)
 
+    def relPath(self, path):
+        '''Convert paths relative to projectdir'''
+        return osp.relpath(path, self.projectdir)
+
+    def absPath(self, path):
+        '''Convert paths to absolute from project dir.'''
+        return osp.abspath(osp.join(self.projectdir, path))
+
+    def checkPaths(self, dictionary=None, warn=True):
+        '''Checks all settings for possible paths and return that are existing
+        as a dictionary.'''
+        dictionary = dictionary or self.__dict__
+        # needs to have a slash \ or /
+        slashed = {k: v
+                   for k, v in dictionary.items()
+                   if osp.sep in v}
+        existing = {k: v
+                    for k, v in slashed.items()
+                    if osp.exists(v)}
+        notexisting = {k: v
+                       for k, v in slashed.items()
+                       if osp.exists(v)}
+
+        if warn:
+            print('These variables look like paths but doesnt exist:')
+            for k, v in notexisting.items():
+                print('%s: %s' % (k, v))
+        return existing
+
     def save(self):
-        json_str = str(self)
+        json_str = self.serialise()
         with self._open_file('w') as f:
             f.write(json_str)
         return
@@ -69,6 +98,9 @@ class SettingsFile(object):
     def load(self):
         with self._open_file() as f:
             sd = json.load(f)
+        # make absolute
+        paths = self.checkPaths()
+        sd.update({k: self.absPath(v) for k, v in paths.items()})
         self.__dict__.update(sd)
         return
 
@@ -78,6 +110,10 @@ class SettingsFile(object):
     def serialise(self):
         '''Default serialisation happens here via json.dumps'''
         var = self.__dict__.copy()
+        # make paths relative
+        paths = self.checkPaths()
+        var.update({k: self.relPath(v) for k, v in paths.items()})
+        # remove settings
         var.pop('settings_path')
         return json.dumps(var, indent=1, sort_keys=True)
 
