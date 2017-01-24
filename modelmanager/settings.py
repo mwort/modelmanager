@@ -7,7 +7,6 @@ management and validation of the project settings defined in the settings
 import json
 from os import path as ospath
 
-
 class SettingsFile(object):
     '''
     The settings file representation. All class variables are default values
@@ -21,11 +20,13 @@ class SettingsFile(object):
     # define defaults here
     store_input_functions = []
     projectdir = '.'
+    settings_path = '.mm/settings.json'
 
-    def __init__(self, path='.mm/settings.json', **override):
+    def __init__(self, **override):
 
         # define absolute to file
-        self.settings_path = ospath.abspath(ospath.join(self.projectdir, path))
+        self.settings_path = ospath.abspath(ospath.join(self.projectdir,
+                                                        self.settings_path))
 
         # load settings from file
         try:
