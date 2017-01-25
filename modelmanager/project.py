@@ -11,24 +11,36 @@ modelmanager --projectdir=.
 from settings import SettingsFile
 import os
 from os import path as osp
+from glob import glob
 
 
 class Project(object):
 
     def __init__(self, projectdir='.', **settings):
 
-        # change into project dir
-
-        # check resource dir exists
-            # glob.glob(*/PARAMETERFILE)
-        sfp = glob(osp.join(projectdir, '*', SettingsFile.settings_file))
-            # if 0, none exists
-            # if > 1, take first and warn
-            # if 1, just load
-
         # load parameter file
+        self.settings = self._getSettingsFile(projectdir)
+
         return
 
+    def _getSettingsFile(self, projectdir):
+        # check resource dir exists
+            # glob.glob(*/PARAMETERFILE)
+        settings_glob = osp.join(projectdir, '*', SettingsFile.settings_file)
+        sfp = glob(settings_glob)
+        # warn if other than 1
+        if len(sfp) == 0:
+            errmsg = 'Cant find a modulemanager settings file under:\n'
+            errmsg += settings_glob + '\n'
+            errmsg += 'You can initialise a new project here using: \n'
+            errmsg += 'modelmanager init \n'
+            raise IOError(errmsg)
+        elif len(sfp) > 1:
+            msg = 'Found multiple modulemanager settings files (using *):\n'
+            msg += '*'+'\n'.join(sfp)
+            print(msg)
+
+        return sfp[0]
 
 def initialise(**settings):
 
