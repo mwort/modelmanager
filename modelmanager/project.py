@@ -24,10 +24,10 @@ class Project(object):
         return
 
     def _getSettingsFile(self, projectdir):
-        # check resource dir exists
-            # glob.glob(*/PARAMETERFILE)
+        # search settings file in any directory in this directory
+        settings_dotglob = osp.join(projectdir, '.*', SettingsFile.settings_file) # with dotted dir
         settings_glob = osp.join(projectdir, '*', SettingsFile.settings_file)
-        sfp = glob(settings_glob)
+        sfp = glob(settings_glob) + glob(settings_dotglob)
         # warn if other than 1
         if len(sfp) == 0:
             errmsg = 'Cant find a modulemanager settings file under:\n'
@@ -42,7 +42,9 @@ class Project(object):
 
         return sfp[0]
 
+
 def initialise(**settings):
+    """initialise a default modelmanager project in the current directory."""
 
     # get defaults
     settings = SettingsFile(**settings)
@@ -64,12 +66,51 @@ def initialise(**settings):
     return
 
 
-def execute_from_command():
+def execute_from_command(functions={'init':initialise}):
+    """Comandline interface.
+
+    Build an argsparse commandline interface by trying to load a project in
+    the current directory and accessing the commandline_functions settings. If
+    that fails, just show init command.
+    """
     import argparse
+    import inspect
 
-    parser = argparse.ArgumentParser(description='A helpful tool for modellers.')
-    parser.add_argument('--projectdir', type=str, default='.',
-                        help='Model root directory.')
+    try:
+        pro = Project()
+        if hasattr(pro, 'commandline_functions'):
+            for f in pro.commandline_functions:
+                if hasattr(pro, f):
+                    functions[f] = getattr(pro, f)
+                else:
+                    print('Function %s is listed in commandline_function settings, but is not found in project.')
+    except:
+        pass
 
-    args = parser.parse_args()
-    initialise(**vars(args))
+    cli_description = "The modelmanager command line interface."
+
+    # create the top-level parser
+    mainparser = argparse.ArgumentParser(description=cli_description)
+    subparsers = mainparser.add_subparsers(help='function to call',
+                                           dest='call')
+
+    for l, f in functions.items():
+        # get function arguments
+        fspec = inspect.getargspec(f)
+        # create the parser for the functions
+        nargs = len(fspec.args)-len(fspec.defaults or [])
+        defs = [None]*nargs + list(fspec.defaults or [])
+        argsdef = zip(fspec.args, defs)
+        callsig = ['%s=%r' % (a, d) if d is not None else a for a, d in argsdef]
+        helpstr = '(%s) ' % ', '.join(callsig) + (f.__doc__ or '')
+        fparser = subparsers.add_parser(f.__name__, help=helpstr)
+        # function arguments
+        for a,d in argsdef:
+            fparser.add_argument(a if d == None else '--'+a, default=d,
+                                 help='(default={0!r})'.format(d) if d!=None else '')
+
+    args = mainparser.parse_args()
+    # send to function and return whatever is returned by the function (pop removes call from dict)
+    functions[args.__dict__.pop('call')](**args.__dict__)
+    return
+
