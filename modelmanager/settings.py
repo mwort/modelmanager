@@ -21,19 +21,33 @@ class SettingsFile(object):
     '''
     # define defaults here
     store_input_functions = []
+    neversave = ['settings_path', 'resourcedir', 'settings_file']
+
+    # these settings will be overwritten by the __init__ function from the
+    # settings_path (required arguement) and are just define here as defaults
     projectdir = '.'
     resourcedir = '.mm'
+    # settings_file is a module constant, ie. can not be changed for a project
     settings_file = 'settings.json'
-    neversave = ['settings_path', 'resourcedir', 'settings_file']
 
     def __init__(self, settings_path, **override):
 
         # make defaults instance variables
         self.__dict__.update(self._getDefaults())
 
-        # save settings paths
-        self.settings_path = settings_path
-        self.resourcedir = osp.dirname(settings_path)
+        # save settings paths and reassign settings variables
+        self.settings_path = osp.abspath(settings_path)
+        resdir, setfile = osp.split(self.settings_path)
+        varoverr = {'projectdir': osp.dirname(resdir),
+                    'resourcedir': resdir,
+                    'settings_file': setfile}
+        for l, p in varoverr.items():
+            if l in override:
+                # remove from override to prevent it from being set later
+                prem = override.pop(l)
+                print('%s (%s) will be overridden by settings_path %s'
+                      % (l, prem, settings_path))
+            self.__dict__[l] = p
 
         # load settings from file
         try:
@@ -82,10 +96,10 @@ class SettingsFile(object):
                     if osp.exists(v)}
         notexisting = {k: v
                        for k, v in slashed.items()
-                       if osp.exists(v)}
+                       if not osp.exists(v)}
 
-        if warn:
-            print('These variables look like paths but doesnt exist:')
+        if warn and len(notexisting) > 1:
+            print('These variables look like paths but dont exist:')
             for k, v in notexisting.items():
                 print('%s: %s' % (k, v))
         return existing
