@@ -17,5 +17,5 @@ from django.conf.urls import include, url
 
 urlpatterns = [
     # add url patterns before this include to override defaults
-    url(r'^',include('modelmanager.browserapp.urls'))
+    url(r'^',include('modelmanager.browser.urls'))
     ]

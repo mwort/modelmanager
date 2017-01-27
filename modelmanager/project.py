@@ -8,10 +8,13 @@ modelmanager --projectdir=.
 
 """
 
-from settings import SettingsFile
 import os
 from os import path as osp
 from glob import glob
+import shutil
+
+from settings import SettingsFile
+import browser
 
 
 class Project(object):
@@ -45,8 +48,11 @@ class Project(object):
 
 def initialise(**settings):
     """initialise a default modelmanager project in the current directory."""
+    import browser
 
     # get defaults
+    if 'settings_path' not in settings:
+        settings['settings_path'] = osp.join(SettingsFile.projectdir,SettingsFile.resourcedir,SettingsFile.settings_file)
     settings = SettingsFile(**settings)
 
     # create resource dir if it does not exist
@@ -61,7 +67,21 @@ def initialise(**settings):
     settings.save()
 
     # copy mmbrowser app
+    settings.browser_path = osp.join(settings.resourcedir,'browser')
+
+    shutil.copytree(osp.join(browser.__path__[0], 'browser'), settings.browser_path)
+
+    # setup django
+    import sys
+    from django.core.management import execute_from_command_line
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "browser.settings")
+    sys.path = [settings.resourcedir] + sys.path
+
+    import django
+    django.setup()
+
     # run migrate to create db and populate with some defaults
+    execute_from_command_line(['manage','migrate'])
 
     return
 
@@ -103,7 +123,7 @@ def execute_from_command(functions={'init':initialise}):
         argsdef = zip(fspec.args, defs)
         callsig = ['%s=%r' % (a, d) if d is not None else a for a, d in argsdef]
         helpstr = '(%s) ' % ', '.join(callsig) + (f.__doc__ or '')
-        fparser = subparsers.add_parser(f.__name__, help=helpstr)
+        fparser = subparsers.add_parser(l, help=helpstr)
         # function arguments
         for a,d in argsdef:
             fparser.add_argument(a if d == None else '--'+a, default=d,

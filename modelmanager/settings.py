@@ -92,12 +92,12 @@ class SettingsFile(object):
 
     def save(self):
         json_str = self.serialise()
-        with self._open_file('w') as f:
+        with self._openFile('w') as f:
             f.write(json_str)
         return
 
     def load(self):
-        with self._open_file() as f:
+        with self._openFile() as f:
             sd = json.load(f)
         # make absolute
         paths = self.checkPaths()
