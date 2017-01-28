@@ -90,12 +90,9 @@ def initialise(projectdir='.', **settingskwargs):
     # create resource dir if it does not exist, raise error otherwise
     ermg = 'There seems to be a modelmanager project here already:\n'
     assert not osp.exists(settings.resourcedir), ermg + settings.resourcedir
-    os.mkdir(settings.resourcedir)
 
-    # copy mmbrowser app
-    settings.browser_path = osp.join(settings.resourcedir, 'browser')
-    shutil.copytree(osp.join(browser.__path__[0], 'browser'),
-                    settings.browser_path)
+    default_resources = osp.join(osp.dirname(__file__), 'resources')
+    shutil.copytree(default_resources, settings.resourcedir)
 
     # setup django
     env = ProjectEnv(settings.resourcedir)
