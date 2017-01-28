@@ -54,6 +54,7 @@ class Project(object):
         sf = SettingsFile(sfp[0])
         return sf
 
+
 class ProjectEnv:
     '''Class to handle the environment variables needed for the project.'''
     def __init__(self, resourcedir):
@@ -66,7 +67,7 @@ class ProjectEnv:
         return
 
 
-def initialise(**settingskwargs):
+def initialise(projectdir='.', **settingskwargs):
     """Initialise a default modelmanager project in the current directory."""
     from django.core.management import execute_from_command_line
 
@@ -75,13 +76,17 @@ def initialise(**settingskwargs):
         sfpc = [settingskwargs.pop(s)
                 if s in settingskwargs
                 else SettingsFile.__dict__[s]
-                for s in ['projectdir', 'resourcedir', 'settings_file']]
-        settingskwargs['settings_path'] = osp.join(*sfpc)
+                for s in ['resourcedir', 'settings_file']]
+        settingskwargs['settings_path'] = osp.join(projectdir, *sfpc)
     # load settings
     settings = SettingsFile(**settingskwargs)
 
-    print('Initialising a new modelmanager project in %s'
-          % settings.resourcedir)
+    print('Initialising a new modelmanager project in: \n%s\n'
+          % settings.projectdir +
+          'with modelmanager files in:\n%s' % settings.resourcedir)
+    # create projectdir if not existing
+    if not osp.exists(projectdir):
+        os.mkdir(settings.projectdir)
     # create resource dir if it does not exist
     if osp.exists(settings.resourcedir):
         errmsg = 'There seems to be already a modelmanager project here:\n'
