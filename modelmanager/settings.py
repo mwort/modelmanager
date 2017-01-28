@@ -24,7 +24,7 @@ class SettingsFile(object):
     neversave = ['settings_path', 'resourcedir', 'settings_file']
 
     # these settings will be overwritten by the __init__ function from the
-    # settings_path (required arguement) and are just define here as defaults
+    # settings_path (required arguement) and are just defined here as defaults
     projectdir = '.'
     resourcedir = '.mm'
     # settings_file is a module constant, ie. can not be changed for a project
