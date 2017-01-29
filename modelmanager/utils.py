@@ -1,4 +1,5 @@
 """All handy, general utility functionality used throughout the package."""
+import types
 
 
 def load_module_path(name, path):
@@ -17,3 +18,10 @@ def load_module_path(name, path):
         spec.loader.exec_module(m)
 
     return m
+
+
+def inherit(obj, functions):
+    """Attach all functions to the object."""
+    obj.__dict__.update({f.__name__: types.MethodType(f, obj)
+                         for f in functions})
+    return

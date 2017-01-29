@@ -34,8 +34,8 @@ class Project(object):
         self.__dict__.update({k: v for k, v in self.settings.__dict__.items()
                               if not k.startswith('_')})
 
-        # load python resources
-        self._loadResources()
+        # load attach project functions as methods
+        self._inheritResources()
 
         # load environment (resourcedir and Django)
         self.env = ProjectEnv(self.settings.resourcedir)
@@ -64,11 +64,22 @@ class Project(object):
         sf = SettingsFile(sfp[0])
         return sf
 
-    def _loadResources(self):
-        package_mod = osp.join(self.resourcedir, '__init__.py')
-        ermg = 'Resourcedir %s has no __init__.py file!' % self.resourcedir
-        assert osp.exists(package_mod), ermg
-        self.resources = utils.load_module_path('resources', package_mod)
+    def _loadResource(self, namespace):
+        path = namespace.split('.')
+        mod = path[-1]
+        mod_path = osp.join(self.resourcedir, *path[:-1]+[mod + '.py'])
+        ermg = '%s does not exist!' % mod_path
+        assert osp.exists(mod_path), ermg
+        return utils.load_module_path(mod, mod_path)
+
+    def _inheritResources(self):
+        """Inherit all functions from resources.projects that have self as
+        their first argument.
+        """
+        project_mod = self._loadResource('project')
+        funcs = [f for l, f in project_mod.__dict__.items()
+                 if (not l.startswith('_') and hasattr(f, '__call__'))]
+        utils.inherit(self, funcs)
         return
 
 
