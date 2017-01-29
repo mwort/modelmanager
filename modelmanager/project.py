@@ -92,6 +92,7 @@ class Project(object):
         return
 
     def start_browser(self):
+        """Start the model browser."""
         utils.manage_django('runserver')
         return
 

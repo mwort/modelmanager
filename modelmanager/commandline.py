@@ -14,9 +14,11 @@ def execute_from_commandline(functions={'init': project.initialise}):
     try:
         pro = project.Project()
         if hasattr(pro, 'commandline_functions'):
-            for f in pro.commandline_functions:
+            ermsg = 'commandline_functions settings must be a dictioinary!'
+            assert type(pro.commandline_functions) == dict, ermsg
+            for l, f in pro.commandline_functions.items():
                 if hasattr(pro, f):
-                    functions[f] = getattr(pro, f)
+                    functions[l] = getattr(pro, f)
                 else:
                     print('Function %s is listed in commandline_function ' +
                           'settings, but is not found in project.')

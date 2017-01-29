@@ -22,7 +22,7 @@ class SettingsFile(object):
     # define defaults here
     store_input_functions = []
     neversave = ['settings_path', 'resourcedir', 'settings_file']
-    commandline_functions = ['start_browser']
+    commandline_functions = {'browser': 'start_browser'}
 
     # these settings will be overwritten by the __init__ function from the
     # settings_path (required arguement) and are just defined here as defaults
