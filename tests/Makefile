@@ -3,4 +3,4 @@ default:
 	python -m unittest discover
 
 clean:
-	git clean -d ./*
+	git clean -d -f ./*
