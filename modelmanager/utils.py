@@ -25,3 +25,10 @@ def inherit(obj, functions):
     obj.__dict__.update({f.__name__: types.MethodType(f, obj)
                          for f in functions})
     return
+
+
+def manage_django(*args):
+    """Convenience function for django manage.py commands."""
+    from django.core.management import execute_from_command_line
+    execute_from_command_line(['manage'] + list(args))
+    return

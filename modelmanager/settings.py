@@ -22,11 +22,12 @@ class SettingsFile(object):
     # define defaults here
     store_input_functions = []
     neversave = ['settings_path', 'resourcedir', 'settings_file']
+    commandline_functions = ['start_browser']
 
     # these settings will be overwritten by the __init__ function from the
     # settings_path (required arguement) and are just defined here as defaults
     projectdir = '.'
-    resourcedir = '.mm'
+    resourcedir = 'mm'
     # settings_file is a module constant, ie. can not be changed for a project
     settings_file = 'settings.json'
 

@@ -14,6 +14,7 @@ from glob import glob
 import shutil
 
 import django
+from django import conf as dj_conf
 
 from settings import SettingsFile
 from . import utils
@@ -83,17 +84,20 @@ class Project(object):
 
     def _confBrowser(self):
         # forcing override
-        django.conf.settings._wrapped = django.conf.empty
+        dj_conf.settings._wrapped = dj_conf.empty
         # now configure with this browser.settings
         set_mod = self._loadResource('browser.settings')
-        django.conf.settings.configure(set_mod)
+        dj_conf.settings.configure(set_mod)
         django.setup()
+        return
+
+    def start_browser(self):
+        utils.manage_django('runserver')
         return
 
 
 def initialise(projectdir='.', **settingskwargs):
     """Initialise a default modelmanager project in the current directory."""
-    from django.core.management import execute_from_command_line
 
     # use defaults for the settings file if not given in settings
     if 'settings_path' not in settingskwargs:
@@ -125,7 +129,7 @@ def initialise(projectdir='.', **settingskwargs):
     django.setup()
 
     # run migrate to create db and populate with some defaults
-    execute_from_command_line(['manage', 'migrate', '-v 0'])
+    utils.manage_django('migrate', '-v 0')
 
     # save default settings
     settings.save()

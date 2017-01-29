@@ -37,6 +37,10 @@ def execute_from_commandline(functions={'init': project.initialise}):
         nargs = len(fspec.args)-len(fspec.defaults or [])
         defs = [None]*nargs + list(fspec.defaults or [])
         argsdef = zip(fspec.args, defs)
+        # remove self
+        if len(argsdef) > 0 and argsdef[0][0] == 'self':
+            argsdef = argsdef[1:] if len(argsdef) > 1 else []
+
         callsig = ['%s=%r' % (a, d) if d is not None else a
                    for a, d in argsdef]
         helpstr = '(%s) ' % ', '.join(callsig) + (f.__doc__ or '')
@@ -50,5 +54,9 @@ def execute_from_commandline(functions={'init': project.initialise}):
     args = mainparser.parse_args()
     # send to function and return whatever is returned by the function
     # (pop removes call from dict)
-    functions[args.__dict__.pop('call')](**args.__dict__)
+    func = args.__dict__.pop('call')
+    #if hasattr(pro, func):
+    #    getattr(pro, func)(**args.__dict__)
+    #else:
+    functions[func](**args.__dict__)
     return
