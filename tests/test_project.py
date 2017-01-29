@@ -3,6 +3,8 @@ import unittest
 import sys
 import os
 import shutil
+import subprocess
+import cProfile, pstats
 
 import modelmanager as mm
 
@@ -44,14 +46,15 @@ class ProjectSetup(unittest.TestCase):
         return
 
     # def calling second initialise doesnt work yet
-    def _initialise_with_projectdir(self):
+    def test_initialise_commandline(self):
         self._mkprodir()
-        self.pro = mm.project.initialise(projectdir=self.projectdir)
-        parsed_projectdir = os.path.split(self.pro.settings.projectdir)[-1]
-        self.assertEqual(parsed_projectdir, self.projectdir)
+        subprocess.call(['modelmanager', 'init',
+                         '--projectdir=%s' % self.projectdir])
         self._tidy()
         return
 
 
 if __name__ == '__main__':
-    unittest.main()
+    cProfile.run('unittest.main()', 'pstats')
+    # print profile stats ordered by time
+    pstats.Stats('pstats').strip_dirs().sort_stats('time').print_stats(10)
