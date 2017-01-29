@@ -83,12 +83,7 @@ class Project(object):
         return
 
     def _confBrowser(self):
-        # forcing override
-        dj_conf.settings._wrapped = dj_conf.empty
-        # now configure with this browser.settings
-        set_mod = self._loadResource('browser.settings')
-        dj_conf.settings.configure(set_mod)
-        django.setup()
+        utils.setup_django(self._loadResource('django_settings'))
         return
 
     def start_browser(self):
@@ -124,14 +119,10 @@ def initialise(projectdir='.', **settingskwargs):
     shutil.copytree(default_resources, settings.resourcedir)
 
     # setup django
-    browser_set_path = osp.join(settings.resourcedir, 'browser', 'settings.py')
-    set_mod = utils.load_module_path('settings', browser_set_path)
-    dj_conf.settings._wrapped = dj_conf.empty  # to enable override of project
-    django.conf.settings.configure(set_mod)
-    django.setup()
+    utils.setup_django(osp.join(settings.resourcedir, 'django_settings.py'))
 
     # run migrate to create db and populate with some defaults
-    utils.manage_django('migrate', '-v 0')
+    utils.manage_django('migrate', '-v 2')
 
     # save default settings
     settings.save()

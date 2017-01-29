@@ -1,5 +1,7 @@
 """All handy, general utility functionality used throughout the package."""
 import types
+import django
+import os.path as osp
 
 
 def load_module_path(name, path):
@@ -31,4 +33,21 @@ def manage_django(*args):
     """Convenience function for django manage.py commands."""
     from django.core.management import execute_from_command_line
     execute_from_command_line(['manage'] + list(args))
+    return
+
+
+def setup_django(pathormodule):
+    """Setup django settings w either path to settings or a loaded module."""
+    if type(pathormodule) == str and osp.exists(pathormodule):
+        set_mod = load_module_path('settings', pathormodule)
+    elif isinstance(pathormodule, types.ModuleType):
+        set_mod = pathormodule
+    else:
+        raise IOError('%s must be a valid path or a module instance.'
+                      % pathormodule)
+
+    # to enable override of project
+    django.conf.settings._wrapped = django.conf.empty
+    django.conf.settings.configure(set_mod)
+    django.setup()
     return
