@@ -126,6 +126,7 @@ def initialise(projectdir='.', **settingskwargs):
     # setup django
     browser_set_path = osp.join(settings.resourcedir, 'browser', 'settings.py')
     set_mod = utils.load_module_path('settings', browser_set_path)
+    dj_conf.settings._wrapped = dj_conf.empty  # to enable override of project
     django.conf.settings.configure(set_mod)
     django.setup()
 
