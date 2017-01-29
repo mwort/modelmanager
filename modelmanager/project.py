@@ -12,7 +12,6 @@ import os
 from os import path as osp
 from glob import glob
 import shutil
-import sys
 
 import django
 
@@ -37,8 +36,8 @@ class Project(object):
         # load attach project functions as methods
         self._inheritResources()
 
-        # load environment (resourcedir and Django)
-        self.env = ProjectEnv(self.settings.resourcedir)
+        # load Django browser
+        self._confBrowser()
 
         return
 
@@ -82,16 +81,12 @@ class Project(object):
         utils.inherit(self, funcs)
         return
 
-
-class ProjectEnv:
-    """Class to handle the environment variables needed for the project."""
-
-    def __init__(self, resourcedir):
-        self.resourcedir = resourcedir
-        # add resourcedir to python path
-        sys.path = [self.resourcedir] + sys.path
-        # django setup
-        os.environ["DJANGO_SETTINGS_MODULE"] = "browser.settings"
+    def _confBrowser(self):
+        # forcing override
+        django.conf.settings._wrapped = django.conf.empty
+        # now configure with this browser.settings
+        set_mod = self._loadResource('browser.settings')
+        django.conf.settings.configure(set_mod)
         django.setup()
         return
 
@@ -124,7 +119,10 @@ def initialise(projectdir='.', **settingskwargs):
     shutil.copytree(default_resources, settings.resourcedir)
 
     # setup django
-    env = ProjectEnv(settings.resourcedir)
+    browser_set_path = osp.join(settings.resourcedir, 'browser', 'settings.py')
+    set_mod = utils.load_module_path('settings', browser_set_path)
+    django.conf.settings.configure(set_mod)
+    django.setup()
 
     # run migrate to create db and populate with some defaults
     execute_from_command_line(['manage', 'migrate', '-v 0'])
