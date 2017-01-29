@@ -1,6 +1,15 @@
 
 .PHONY: update_docs clean
 
+default:
+	@echo Default target not defined. Check the Makefile for targets.
+
+setup:
+	virtualenv env
+	source env/bin/activate
+	pip install -r requirements.txt
+
+
 clean:
 	python setup.py clean
 	rm -rf build/ dist/ *.egg-info
