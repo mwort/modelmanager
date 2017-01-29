@@ -17,15 +17,25 @@ import sys
 import django
 
 from settings import SettingsFile
-import browser
+from . import utils
 
 
 class Project(object):
+    """The central project object.
+
+    All variables and fuctions are available to operate on the current model
+    state.
+    """
 
     def __init__(self, projectdir='.', **settings):
 
-        # load parameter file
+        # load parameter file and attach
         self.settings = self._getSettingsFile(projectdir)
+        self.__dict__.update({k: v for k, v in self.settings.__dict__.items()
+                              if not k.startswith('_')})
+
+        # load python resources
+        self._loadResources()
 
         # load environment (resourcedir and Django)
         self.env = ProjectEnv(self.settings.resourcedir)
@@ -54,9 +64,17 @@ class Project(object):
         sf = SettingsFile(sfp[0])
         return sf
 
+    def _loadResources(self):
+        package_mod = osp.join(self.resourcedir, '__init__.py')
+        ermg = 'Resourcedir %s has no __init__.py file!' % self.resourcedir
+        assert osp.exists(package_mod), ermg
+        self.resources = utils.load_module_path('resources', package_mod)
+        return
+
 
 class ProjectEnv:
-    '''Class to handle the environment variables needed for the project.'''
+    """Class to handle the environment variables needed for the project."""
+
     def __init__(self, resourcedir):
         self.resourcedir = resourcedir
         # add resourcedir to python path
