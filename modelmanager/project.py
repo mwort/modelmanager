@@ -13,9 +13,6 @@ from os import path as osp
 from glob import glob
 import shutil
 
-import django
-from django import conf as dj_conf
-
 from settings import SettingsFile
 from . import utils
 
@@ -36,9 +33,6 @@ class Project(object):
 
         # load attach project functions as methods
         self._inheritResources()
-
-        # load Django browser
-        self._confBrowser()
 
         return
 
@@ -83,11 +77,12 @@ class Project(object):
         return
 
     def _confBrowser(self):
-        utils.setup_django(self._loadResource('django_settings'))
+        utils.setup_django(self._loadResource('browser.settings'))
         return
 
     def start_browser(self):
         """Start the model browser."""
+        self._confBrowser()
         utils.manage_django('runserver')
         return
 
@@ -119,10 +114,11 @@ def initialise(projectdir='.', **settingskwargs):
     shutil.copytree(default_resources, settings.resourcedir)
 
     # setup django
-    utils.setup_django(osp.join(settings.resourcedir, 'django_settings.py'))
+    utils.setup_django(osp.join(settings.resourcedir,
+                                'browser', 'settings.py'))
 
     # run migrate to create db and populate with some defaults
-    utils.manage_django('migrate', '-v 2')
+    utils.manage_django('migrate', '-v 0')
 
     # save default settings
     settings.save()

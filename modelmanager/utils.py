@@ -1,4 +1,5 @@
 """All handy, general utility functionality used throughout the package."""
+import sys
 import types
 import django
 import os.path as osp
@@ -30,7 +31,9 @@ def inherit(obj, functions):
 
 
 def manage_django(*args):
-    """Convenience function for django manage.py commands."""
+    """Convenience function for django manage.py commands.
+    Dango needs to be setup for this to work.
+    """
     from django.core.management import execute_from_command_line
     execute_from_command_line(['manage'] + list(args))
     return
@@ -47,6 +50,10 @@ def setup_django(pathormodule):
                       % pathormodule)
 
     # to enable override of project
+    djdir = osp.dirname(osp.dirname(set_mod.__file__))
+    if djdir in sys.path:
+        sys.path.remove(djdir)
+    sys.path = [djdir] + sys.path
     django.conf.settings._wrapped = django.conf.empty
     django.conf.settings.configure(set_mod)
     django.setup()
