@@ -1,4 +1,24 @@
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
+from django.contrib import admin
+
+
+def setup(modelsmodule):
+    unregister_defaults()
+    register_all_models(modelsmodule)
+    return
+
+
+def register_all_models(modelsmodule):
+    # register all models defined in browser.models
+    admin.site.register([cls for name, cls in modelsmodule.__dict__.items()
+                         if isinstance(cls, type)])
+    return
+
+
+def unregister_defaults():
+    admin.site.unregister(User)
+    admin.site.unregister(Group)
+    return
 
 
 class NoAuthentication(object):
