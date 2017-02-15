@@ -4,12 +4,14 @@ import sys
 import os
 import shutil
 import subprocess
+import signal
+
 import cProfile, pstats
 
 import modelmanager as mm
 
 
-class ProjectTester(unittest.TestCase):
+class ProjectTestCase(unittest.TestCase):
     """Abstract class to initialise and clean a default project."""
 
     projectdir = 'testmodel'
@@ -51,6 +53,14 @@ class ProjectSetup(unittest.TestCase):
         subprocess.call(['modelmanager', 'init',
                          '--projectdir=%s' % self.projectdir])
         self._tidy()
+        return
+
+
+class Browser(ProjectTestCase):
+    """Test functionality of Browser app."""
+
+    def test_conf(self):
+        self.pro._confBrowser()
         return
 
 
