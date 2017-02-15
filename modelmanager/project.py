@@ -34,6 +34,8 @@ class Project(object):
         # load attach project functions as methods
         self._inheritResources()
 
+        self._migrateBrowser()
+
         return
 
     def _getSettingsFile(self, projectdir):
@@ -80,6 +82,12 @@ class Project(object):
         utils.setup_django(self._loadResource('browser.settings'))
         return
 
+    def _migrateBrowser(self):
+        self._confBrowser()
+        utils.manage_django('makemigrations', 'browser', '-v 0')
+        utils.manage_django('migrate', '-v 0')
+        return
+
     def start_browser(self):
         """Start the model browser."""
         self._confBrowser()
@@ -112,13 +120,6 @@ def initialise(projectdir='.', **settingskwargs):
 
     default_resources = osp.join(osp.dirname(__file__), 'resources')
     shutil.copytree(default_resources, settings.resourcedir)
-
-    # setup django
-    utils.setup_django(osp.join(settings.resourcedir,
-                                'browser', 'settings.py'))
-
-    # run migrate to create db and populate with some defaults
-    utils.manage_django('migrate', '-v 0')
 
     # save default settings
     settings.save()
