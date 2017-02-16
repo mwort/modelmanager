@@ -34,8 +34,6 @@ class Project(object):
         # load attach project functions as methods
         self._inheritResources()
 
-        self._migrateBrowser()
-
         return
 
     def _getSettingsFile(self, projectdir):
@@ -82,16 +80,20 @@ class Project(object):
         utils.setup_django(self._loadResource('browser.settings'))
         return
 
-    def _migrateBrowser(self):
+    def _migrateBrowser(self, verbosity=0):
         self._confBrowser()
-        utils.manage_django('makemigrations', 'browser', '-v 0')
-        utils.manage_django('migrate', '-v 0')
+        utils.manage_django('makemigrations', 'browser', '-v %1i' % verbosity)
+        utils.manage_django('migrate', '-v %1i' % verbosity)
         return
 
     def start_browser(self):
         """Start the model browser."""
         self._confBrowser()
         utils.manage_django('runserver')
+        return
+
+    def update(self):
+        self._migrateBrowser()
         return
 
 

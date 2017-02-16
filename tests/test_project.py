@@ -57,10 +57,14 @@ class ProjectSetup(unittest.TestCase):
 
 
 class Browser(ProjectTestCase):
-    """Test functionality of Browser app."""
+    """Test functionality of browser django app."""
 
     def test_conf(self):
         self.pro._confBrowser()
+        return
+
+    def test_migrateBrowser(self):
+        self.pro._migrateBrowser(verbosity=2)
         return
 
 

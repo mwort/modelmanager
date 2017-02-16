@@ -9,13 +9,14 @@ https://docs.djangoproject.com/en/1.10/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/1.10/ref/settings/
 """
-from django.conf.global_settings import *
 from modelmanager.browser.settings import *
-
+from modelmanager.project import Project
 import os
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+MMPRO = Project(projectdir=os.path.dirname(BASE_DIR))
 
 # Database
 # https://docs.djangoproject.com/en/1.10/ref/settings/#databases
@@ -23,6 +24,6 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'NAME': os.path.join(BASE_DIR, 'browser', 'db.sqlite3'),
     }
 }
