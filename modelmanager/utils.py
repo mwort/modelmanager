@@ -49,11 +49,12 @@ def setup_django(pathormodule):
         raise IOError('%s must be a valid path or a module instance.'
                       % pathormodule)
 
-    # to enable override of project
-    djdir = osp.dirname(osp.dirname(set_mod.__file__))
-    if djdir in sys.path:
-        sys.path.remove(djdir)
-    sys.path = [djdir] + sys.path
+    # project specific django modules can not be found unless the path is added
+    # to sys.path
+#    djdir = osp.dirname(osp.dirname(set_mod.__file__))
+#    if djdir in sys.path:
+#        sys.path.remove(djdir)
+#    sys.path = [djdir] + sys.path
     django.conf.settings._wrapped = django.conf.empty
     django.conf.settings.configure(set_mod)
     django.setup()

@@ -82,7 +82,7 @@ class Project(object):
 
     def _migrateBrowser(self, verbosity=0):
         self._confBrowser()
-        utils.manage_django('makemigrations', 'browser', '-v %1i' % verbosity)
+#        utils.manage_django('makemigrations', 'browser', '-v %1i' % verbosity)
         utils.manage_django('migrate', '-v %1i' % verbosity)
         return
 
@@ -126,5 +126,8 @@ def initialise(projectdir='.', **settingskwargs):
     # save default settings
     settings.save()
 
-    # load and return project
-    return Project(settings.projectdir)
+    # load project and update/create database
+    pro = Project(settings.projectdir)
+    pro.update()
+
+    return pro
