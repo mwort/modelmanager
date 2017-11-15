@@ -29,6 +29,28 @@ Or clone the repo:
     $ python setup.py install
 
 
+Concept
+-------
+The model interface approach used in the modelmanager is best explained in a little file structure:
+```
+modeldir/                  # main model directory (our model for example has its executable here and an input
+                             and output dir, but its really up to you what you do in here, the only
+                             specific stuff is the resourcedir)
+    resourcedir/
+        settings.json      # any project settings that you need for the interface but are not model
+                             parameters, e.g. paths to input files. Can also be changed/saved through the package
+        interface.py       # here I define all the interface functions, reading/writing input files,
+                             interpreting results etc. Can also just import functions from packages as
+                             long as the function takes a project instance as first argument
+        jobs/              # place to store cluster jobfiles
+        clones/	           # default place to store clones of the model, i.e. copies to play around with 
+                             or slaves for parallel runs
+	    browser/           # this is a django app that tracks and saves my model runs, I used to just have a
+                             couple of txt files here but I want to get this into a little browser app
+                             where you can see what you have done etc., but mainly work in progress
+```
+Thats the basic structure. I then have a project class that loads the settings and the interface from the modeldir and there you have a little python API for your model, including commandline interface. In the interface.py you expose your model interface functions to work with the input/ and output/ or overwrite them for specific model cases, a bit like a plugin approach. The "browser" package stores your runs in a database and lets see them with the little browser app.
+
 
 Usage
 -----
