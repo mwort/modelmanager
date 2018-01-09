@@ -1,0 +1,11 @@
+# Dev/Deployment modules
+ipython
+sphinx
+sphinx_rtd_theme
+nose
+coverage
+pypi-publisher
+
+# modelmanager plugin dependencies
+django
+pandas

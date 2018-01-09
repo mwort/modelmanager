@@ -66,3 +66,11 @@ pro.help()
     core: settings and resources directory with defaults, interface functions, error checking, model input templates, run logging
     swim interface: all interface functions for swim and default settings
     front end: django or grass interface for run log interactions and possibly model i/o interface
+
+*Bare-bones settings file*
+- single project class with anything in settings file attached (variables and functions/imports)
+- all variables are checked in __init__:
+  - modules will be searched for functions which will be attached to Project
+  - classes will be initialised and attached to Project
+  - functions will be attached Project
+  - add mm/ resource dir to sys.path for lifetime of Project to enable imports in settings.py

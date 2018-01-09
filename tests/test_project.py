@@ -1,14 +1,30 @@
 """Test module for the Project class."""
 import unittest
-import sys
 import os
 import shutil
 import subprocess
-import signal
 
 import cProfile, pstats
 
 import modelmanager as mm
+
+TEST_SETTINGS = """
+import os
+from inspect import cleandoc as _cleandoc
+
+test_variable = 123
+
+def test_function(project, d=1):
+    dd = d + 1
+    return dd
+
+class TestPlugin:
+    test_plugin_variable = 456
+
+    def __init__(self, project):
+        self.project = project
+        return
+"""
 
 
 class ProjectTestCase(unittest.TestCase):
@@ -18,7 +34,14 @@ class ProjectTestCase(unittest.TestCase):
 
     def setUp(self):
         os.makedirs(self.projectdir)
-        self.pro = mm.project.initialise(projectdir=self.projectdir)
+        self.project = mm.project.setup(projectdir=self.projectdir)
+        self.write_settings()
+        self.project.settings.load()
+        return
+
+    def write_settings(self):
+        with file(self.project.settings.file, 'w') as f:
+            f.write(TEST_SETTINGS)
         return
 
     def tearDown(self):
@@ -29,43 +52,43 @@ class ProjectTestCase(unittest.TestCase):
 class ProjectSetup(unittest.TestCase):
     """Test multiple ways to setup a project."""
 
-    projectdir = 'testmodel'
+    projectdir = ProjectTestCase.projectdir
 
-    def _mkprodir(self):
-        os.makedirs(self.projectdir)
-
-    def _tidy(self):
+    def tearDown(self):
         shutil.rmtree(self.projectdir)
+        return
 
     def test_initialise_with_resourcedir(self):
-        self._mkprodir()
         crdir = 'custom_resourcedir'
-        self.pro = mm.project.initialise(projectdir=self.projectdir,
-                                         resourcedir=crdir)
-        parsed_resourcedir = os.path.split(self.pro.settings.resourcedir)[-1]
+        self.project = mm.project.setup(projectdir=self.projectdir,
+                                        resourcedir=crdir)
+        parsed_resourcedir = os.path.split(self.project.resourcedir)[-1]
         self.assertEqual(parsed_resourcedir, crdir)
-        self._tidy()
         return
 
-    # def calling second initialise doesnt work yet
-    def test_initialise_commandline(self):
-        self._mkprodir()
-        subprocess.call(['modelmanager', 'init',
+    def test_setup_commandline(self):
+        subprocess.call(['modelmanager', 'setup',
                          '--projectdir=%s' % self.projectdir])
-        self._tidy()
         return
 
 
-class Browser(ProjectTestCase):
-    """Test functionality of browser django app."""
+class Settings(ProjectTestCase):
+    def test_variable(self):
+        self.assertEqual(self.project.test_variable, 123)
 
-    def test_conf(self):
-        self.pro._confBrowser()
-        return
+    def test_function(self):
+        self.assertEqual(self.project.test_function(), 2)
 
-    def test_migrateBrowser(self):
-        self.pro._migrateBrowser(verbosity=2)
-        return
+    def test_class(self):
+        self.assertEqual(self.project.testplugin.test_plugin_variable, 456)
+
+
+class CommandlineInterface(ProjectTestCase):
+    def test_function(self):
+        proc = subprocess.Popen(['python', 'test_function', '--d=2'],
+                                stdout=subprocess.PIPE)
+        for line in iter(proc.stdout.readline, ''):
+            self.assertEqual(line.rstrip(), '3')
 
 
 if __name__ == '__main__':

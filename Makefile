@@ -7,7 +7,7 @@ default:
 setup:
 	virtualenv env
 	source env/bin/activate
-	pip install -r requirements.txt
+	pip install -r requirements_dev.txt
 	python setup.py develop
 
 

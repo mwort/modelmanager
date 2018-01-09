@@ -1,28 +1,22 @@
 """Module for everything to do with the commandline interface."""
-import project
 import argparse
 import inspect
 
+import modelmanager.project
 
-def execute_from_commandline(functions={'init': project.initialise}):
+
+def execute_from_commandline():
     """Comandline interface.
 
     Build an argsparse commandline interface by trying to load a project in
     the current directory and accessing the commandline_functions settings. If
     that fails, just show init command.
     """
+    functions = {'setup': modelmanager.project.setup}
     try:
-        pro = project.Project()
-        if hasattr(pro, 'commandline_functions'):
-            ermsg = 'commandline_functions settings must be a dictioinary!'
-            assert type(pro.commandline_functions) == dict, ermsg
-            for l, f in pro.commandline_functions.items():
-                if hasattr(pro, f):
-                    functions[l] = getattr(pro, f)
-                else:
-                    print('Function %s is listed in commandline_function ' +
-                          'settings, but is not found in project.')
-    except:
+        project = modelmanager.project.Project()
+        functions.update(project.settings.functions)
+    except modelmanager.project.ProjectDoesNotExist:
         pass
 
     cli_description = "The modelmanager command line interface."
@@ -57,8 +51,4 @@ def execute_from_commandline(functions={'init': project.initialise}):
     # send to function and return whatever is returned by the function
     # (pop removes call from dict)
     func = args.__dict__.pop('call')
-    #if hasattr(pro, func):
-    #    getattr(pro, func)(**args.__dict__)
-    #else:
-    functions[func](**args.__dict__)
-    return
+    return functions[func](**args.__dict__)

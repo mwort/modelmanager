@@ -1,19 +1,22 @@
 modelmanager
 ===============================
 
-Version number: 0.0.1
+Version number: 0.0.2
 Author: Michel Wortmann, Potsdam Institute of Climate Impact Research, Germany
 
 Overview
 --------
 
-A python package to manage (scientific) model runs, input and output.
+A python package to create flexible APIs for (scientific) models.
 
 
 Dependencies
 ------------
-All python dependencies are listed in `requirements.txt`. Before installing the
-package (see below) consider setting up a virtual python environment (`virtualenv mydevenv`).
+Modelmanager itself has no dependencies, but some of its plugins do. They will
+direct you two install them through `pip`.
+Python development dependencies are listed in `requirements_dev.txt`. Before
+installing the any package (see below) consider setting up a virtual python
+environment (`virtualenv mydevenv`).
 
 Installation
 --------------------
@@ -31,25 +34,20 @@ Or clone the repo:
 
 Concept
 -------
-The model interface approach used in the modelmanager is best explained in a little file structure:
+The model
+The modelmanager links with your model like illustrated in this file structure:
 ```
-modeldir/                  # main model directory (our model for example has its executable here and an input
-                             and output dir, but its really up to you what you do in here, the only
-                             specific stuff is the resourcedir)
-    resourcedir/
-        settings.json      # any project settings that you need for the interface but are not model
-                             parameters, e.g. paths to input files. Can also be changed/saved through the package
-        interface.py       # here I define all the interface functions, reading/writing input files,
-                             interpreting results etc. Can also just import functions from packages as
-                             long as the function takes a project instance as first argument
-        jobs/              # place to store cluster jobfiles
-        clones/	           # default place to store clones of the model, i.e. copies to play around with 
-                             or slaves for parallel runs
-	    browser/           # this is a django app that tracks and saves my model runs, I used to just have a
-                             couple of txt files here but I want to get this into a little browser app
-                             where you can see what you have done etc., but mainly work in progress
+modeldir/               # your main model directory
+    mm/                 # the modelmanager resource directory
+        settings.py     # define or import here all variables, functions and plugins
+	      browser/        # this is a plugin directory, e.g. for the browser app
+
+    modelexec           # all your model resources
+    input/
+    output/
 ```
-Thats the basic structure. I then have a project class that loads the settings and the interface from the modeldir and there you have a little python API for your model, including commandline interface. In the interface.py you expose your model interface functions to work with the input/ and output/ or overwrite them for specific model cases, a bit like a plugin approach. The "browser" package stores your runs in a database and lets see them with the little browser app.
+With this setup you can either use your model interface through the commandline
+or through the python API (see Usage below).
 
 
 Usage
@@ -60,21 +58,40 @@ Initialise project where in your model root directory:
 cd home/mymodel
 modelmanager init
 ```
-Add some interface functions for your model in .mm/interface.py and register them:
+Add some variables, functions or plugins for your model in mm/settings.py and
+call them on the commandline like this:
 ```
-modelmanager update
+modelmanager example_function --example_argument=2
 ```
-Start the browser app:
+Or use your new model api in a Python script like this:
 ```
-modelmanager browser
+import modelmanager as mm
+
+project = mm.Project()
+result = project.example_function()
+```
+
+Use the browser app by adding this line to your settings:
+```
+from modelmanager.plugins.browser import *
+```
+Then start the application on the commandline:
+```
+modelmanager startbrowser
 ```
 Navigate to localhost/admin in your browser.
-
-
-Example
--------
 
 
 Contributing
 ------------
 Ideas and feature requests are collected in IDEAS.md.
+
+## Testing
+Run test in tests/ like this:
+```
+make                                # runs all tests
+python test_project.py              # just runs test_projects with call stats
+python -m unittest test_project.Settings  # just run Settings tests
+make clean                          # clean any leftover test output
+```
+`make` should pass before submitting a pull/merge request.
