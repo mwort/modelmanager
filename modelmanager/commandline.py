@@ -12,6 +12,7 @@ def execute_from_commandline():
     the current directory and accessing the commandline_functions settings. If
     that fails, just show init command.
     """
+    # non project methods must not have positional arguments
     functions = {'setup': modelmanager.project.setup}
     try:
         project = modelmanager.project.Project()
@@ -42,10 +43,14 @@ def execute_from_commandline():
         helpstr = '(%s) ' % ', '.join(callsig) + (f.__doc__ or '')
         fparser = subparsers.add_parser(l, help=helpstr)
         # function arguments
-        for a, d in argsdef:
-            fparser.add_argument(a if d is None else '--'+a, default=d,
-                                 help='(default={0!r})'.format(d)
-                                      if d is not None else '')
+        for i, (a, d) in enumerate(argsdef):
+            # skip the first project/self positional argument
+            if (i == 0 and not d):
+                continue
+            args = a if d is None else '--'+a
+            hlpstr = '(default={0!r})'.format(d) if d is not None else ''
+            typ = type(d) if d else str
+            fparser.add_argument(args, default=d, help=hlpstr, type=typ)
 
     args = mainparser.parse_args()
     # send to function and return whatever is returned by the function

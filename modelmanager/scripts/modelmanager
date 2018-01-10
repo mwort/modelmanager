@@ -3,4 +3,4 @@
 from modelmanager import commandline
 
 if __name__=='__main__':
-    commandline.execute_from_commandline()
+    print(commandline.execute_from_commandline())

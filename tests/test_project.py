@@ -85,10 +85,13 @@ class Settings(ProjectTestCase):
 
 class CommandlineInterface(ProjectTestCase):
     def test_function(self):
-        proc = subprocess.Popen(['python', 'test_function', '--d=2'],
+        os.chdir(self.projectdir)
+        proc = subprocess.Popen(['modelmanager', 'test_function', '--d=2'],
                                 stdout=subprocess.PIPE)
-        for line in iter(proc.stdout.readline, ''):
-            self.assertEqual(line.rstrip(), '3')
+        lns = [l.rstrip() for l in iter(proc.stdout.readline, '')]
+        self.assertEqual(len(lns), 1)
+        self.assertEqual(lns, ['3'])
+        os.chdir('..')
 
 
 if __name__ == '__main__':
