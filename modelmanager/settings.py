@@ -70,7 +70,7 @@ class SettingsManager(object):
             print(msg)
         self.file = osp.abspath(sfp[0])
         # save resourcedir to project
-        self(recourcedir=osp.dirname(self.file))
+        self(resourcedir=osp.dirname(self.file))
         return utils.load_module_path('settings', self.file)
 
     def __call__(self, *objects, **settings):
@@ -100,13 +100,16 @@ class SettingsManager(object):
                 self.variables[name] = obj
         # attach to project
         #  attributes
-        self._project.__dict__.update(self.variables)
+        for k, v in self.variables.items():
+            setattr(self._project, k, v)
         #  functions (name is same as defined in settings)
-        self._project.__dict__.update(self.functions)
+        for k, f in self.functions.items():
+            setattr(self._project, k, f)
         # classes
         instances = {c.lower(): self._instatiate(self.classes[c])
                      for c in self.classes}
-        self._project.__dict__.update(instances)
+        for k, c in instances.items():
+            setattr(self._project, k, c)
         return
 
     def _instatiate(self, cla):

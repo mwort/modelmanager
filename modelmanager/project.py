@@ -22,8 +22,6 @@ class Project(object):
     state.
     """
     # defaults
-    projectdir = '.'
-    resourcedir = 'mm'
     settings_file = 'settings.py'
 
     def __init__(self, projectdir='.', **settings):
@@ -35,15 +33,11 @@ class Project(object):
         return
 
 
-def setup(projectdir='.', **settings):
+def setup(projectdir='.', resourcedir='mm'):
     """Initialise a default modelmanager project in the current directory."""
 
-    # use defaults if not given in settings
-    for s in ['resourcedir', 'settings_file']:
-        if s not in settings:
-            settings[s] = Project.__dict__[s]
-    resourcedir = osp.join(projectdir, settings['resourcedir'])
-    settings_path = osp.join(resourcedir, settings['settings_file'])
+    resourcedir = osp.join(projectdir, resourcedir)
+    settings_path = osp.join(resourcedir, Project.settings_file)
     print('Initialising a new modelmanager project in: \n%s\n' % projectdir +
           'with modelmanager files in:\n%s' % settings_path)
     # create projectdir if not existing
@@ -58,7 +52,7 @@ def setup(projectdir='.', **settings):
     shutil.copytree(default_resources, resourcedir)
 
     # load project and update/create database
-    pro = Project(projectdir, **settings)
+    pro = Project(projectdir)
 
     return pro
 
