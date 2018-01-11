@@ -1,24 +1,6 @@
 from django.contrib.auth.models import User, Group
 from django.contrib import admin
-
-
-def setup(modelsmodule):
-    unregister_defaults()
-    register_all_models(modelsmodule)
-    return
-
-
-def register_all_models(modelsmodule):
-    # register all models defined in browser.models
-    admin.site.register([cls for name, cls in modelsmodule.__dict__.items()
-                         if isinstance(cls, type)])
-    return
-
-
-def unregister_defaults():
-    admin.site.unregister(User)
-    admin.site.unregister(Group)
-    return
+from django.apps import apps
 
 
 class NoAuthentication(object):
@@ -35,9 +17,23 @@ class NoAuthentication(object):
         try:
             request.user = User.objects.filter()[0]
         except IndexError:
-            defaultuser = dict(username='mmuser', password='123', email='')
+            defaultuser = dict(username='modelmanager', password='1', email='')
             request.user = User.objects.create_superuser(**defaultuser)
 
         response = self.get_response(request)
 
         return response
+
+
+def register_models(applabel):
+    app = apps.get_app_config(applabel)
+    # register all models defined in browser.models
+    for k, m in app.models.items():
+        admin.site.register(m)
+    return
+
+
+admin.site.unregister(User)
+admin.site.unregister(Group)
+register_models('modelmanager')
+register_models('browser')

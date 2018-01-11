@@ -11,8 +11,6 @@ https://docs.djangoproject.com/en/1.10/ref/settings/
 """
 from django.conf.global_settings import *
 
-import os
-
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/1.10/howto/deployment/checklist/
@@ -23,7 +21,7 @@ SECRET_KEY = '3ha#a9973e(g+@7ag7@gd^71k8eqz7)sta_#2n14-ctjh8vobj'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["localhost"]
 
 
 # Application definition
@@ -35,7 +33,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'modelmanager.browser'
+    'modelmanager.plugins.browser.BrowserConfig',
+    'browser.BrowserResourcesConfig'
 ]
 
 MIDDLEWARE = [
@@ -43,12 +42,12 @@ MIDDLEWARE = [
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'modelmanager.browser.admin.NoAuthentication',
+    'modelmanager.plugins.browser.admin.NoAuthentication',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'modelmanager.browser.urls'
+ROOT_URLCONF = 'modelmanager.plugins.browser.urls'
 
 TEMPLATES = [
     {
@@ -66,16 +65,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = 'modelmanager.browser.wsgi.application'
+WSGI_APPLICATION = 'modelmanager.plugins.browser.wsgi.application'
 
-
-# Database
-# https://docs.djangoproject.com/en/1.10/ref/settings/#databases
-
-
-
-# Password validation
-# https://docs.djangoproject.com/en/1.10/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
