@@ -1,20 +1,14 @@
-"""Test module for the Project class."""
+"""Test module for the Browser plugin."""
 import unittest
-import os
-import shutil
-import subprocess
-
 import cProfile, pstats
 
 from django.apps import apps
-import modelmanager as mm
 from modelmanager.plugins import browser
 import test_project
 
-TEST_SETTINGS = """
+test_project.TEST_SETTINGS += """
 from modelmanager.plugins.browser import Browser
 """
-test_project.TEST_SETTINGS += TEST_SETTINGS
 
 TEST_MODELS = """
 from django.db import models
@@ -36,7 +30,7 @@ class BrowserSetup(test_project.ProjectTestCase):
     def test_project_model(self):
         with file(self.project.browser.resourcedir+'/models.py', 'w') as f:
             f.write(TEST_MODELS)
-
+        self.project.browser.update_db()
         with self.project.browser.settings:
             from browser import models
             reload(models)
