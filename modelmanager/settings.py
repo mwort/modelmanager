@@ -41,8 +41,8 @@ class SettingsManager(object):
         # filter settings that should be ignored
         settings = {n: self.module.__dict__[n]
                     for n in dir(self.module)
-                    if (not inspect.ismodule(self.module.__dict__[n]) or
-                        n.startswith('_'))}
+                    if not (inspect.ismodule(self.module.__dict__[n]) or
+                            n.startswith('_'))}
         # assign them to project
         self(**settings)
         return
