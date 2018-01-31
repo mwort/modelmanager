@@ -106,9 +106,9 @@ class SettingsManager(object):
         for k, f in self.functions.items():
             setattr(self._project, k, f)
         # classes
-        instances = {c.lower(): self._instatiate(self.classes[c])
+        self.plugins = {c.lower(): self._instatiate(self.classes[c])
                      for c in self.classes}
-        for k, c in instances.items():
+        for k, c in self.plugins.items():
             setattr(self._project, k, c)
         return
 

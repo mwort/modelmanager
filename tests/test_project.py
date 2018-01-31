@@ -24,6 +24,9 @@ class TestPlugin:
     def __init__(self, project):
         self.project = project
         return
+
+    def test_method(self, testarg):
+        return testarg
 """
 
 
@@ -91,6 +94,15 @@ class CommandlineInterface(ProjectTestCase):
         lns = [l.rstrip() for l in iter(proc.stdout.readline, '')]
         self.assertEqual(len(lns), 1)
         self.assertEqual(lns, ['3'])
+        os.chdir('..')
+
+    def test_plugin_method(self):
+        os.chdir(self.projectdir)
+        args = ['modelmanager', 'testplugin', 'test_method', '2']
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
+        lns = [l.rstrip() for l in iter(proc.stdout.readline, '')]
+        self.assertEqual(len(lns), 1)
+        self.assertEqual(lns, ['2'])
         os.chdir('..')
 
 
