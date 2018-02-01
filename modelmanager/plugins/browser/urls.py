@@ -19,3 +19,5 @@ from django.contrib import admin
 urlpatterns = [
     url(r'', admin.site.urls),
 ]
+
+admin.site.site_header = 'Modelmanager'

@@ -61,12 +61,21 @@ class Browser:
         return
 
     def manage(self, *args):
-        """Convenience function for django manage.py commands.
+        """
+        Convenience function for django manage.py commands.
         Dango needs to be setup for this to work.
         """
         from django.core.management import execute_from_command_line
         with self.settings:
             execute_from_command_line(['manage'] + list(args))
+        return
+
+    def start(self):
+        """
+        Start the Django browser app. Navigate to localhost:8000/admin in your
+        browser. To quit the browser server, do control-c on the console.
+        """
+        self.manage('runserver')
         return
 
 
@@ -114,16 +123,3 @@ class BrowserSettings:
         if self.resourcedir in sys.path:
             sys.path = list(filter(lambda a: a != self.resourcedir, sys.path))
         return
-
-
-def startbrowser(project):
-    """
-    Start the Django browser app. Navigate to localhost:8000/admin in your
-    browser. To quit the browser server, do control-c on the console.
-    """
-    project.browser.manage('runserver')
-    return
-
-
-def manage(project, csvcommands):
-    project.browser.manage(*csvcommands.split(','))
