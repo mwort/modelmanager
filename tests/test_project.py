@@ -23,6 +23,7 @@ class TestPlugin:
 
     def __init__(self, project):
         self.project = project
+        self.test_project_variable = project.test_variable
         return
 
     def test_method(self, testarg):
@@ -85,6 +86,12 @@ class Settings(ProjectTestCase):
 
     def test_class(self):
         self.assertEqual(self.project.testplugin.test_plugin_variable, 456)
+        self.assertEqual(self.project.testplugin.test_project_variable, 123)
+
+    def test_override(self):
+        self.project.settings.load(test_variable=321)
+        self.assertEqual(self.project.test_variable, 321)
+        self.assertEqual(self.project.testplugin.test_project_variable, 321)
 
 
 class CommandlineInterface(ProjectTestCase):

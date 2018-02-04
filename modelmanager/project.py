@@ -28,8 +28,8 @@ class Project(object):
         self.projectdir = projectdir
         # initalise settings
         self.settings = SettingsManager(self)
-        # override settings if any are parsed
-        self.settings(**settings)
+        # load settings with overridden settings
+        self.settings.load(**settings)
         return
 
 
@@ -38,8 +38,8 @@ def setup(projectdir='.', resourcedir='mm'):
 
     resourcedir = osp.join(projectdir, resourcedir)
     settings_path = osp.join(resourcedir, Project.settings_file)
-    print('Initialising a new modelmanager project in: \n%s\n' % projectdir +
-          'with modelmanager files in:\n%s' % settings_path)
+    print('Initialising a new modelmanager project in: %s\n' % projectdir +
+          'with modelmanager files in: %s' % settings_path)
     # create projectdir if not existing
     if not osp.exists(projectdir):
         os.mkdir(projectdir)

@@ -27,14 +27,15 @@ class SettingsManager(object):
         self.variables = {}
         self.functions = {}
         self.classes = {}
-
-        self.load()
         return
 
-    def load(self):
+    def load(self, **override_settings):
         """
+        (Re)load and override project settings.
+
         Reads the settings from the settings file and attaches them to the
-        project. Can be used to reload the settings.
+        project. Can be used to reload the settings and override settings that
+        are used when initialising plugins.
         """
         # import module
         self.module = self._load_module()
@@ -43,6 +44,8 @@ class SettingsManager(object):
                     for n in dir(self.module)
                     if not (inspect.ismodule(self.module.__dict__[n]) or
                             n.startswith('_'))}
+        # override
+        settings.update(override_settings)
         # assign them to project
         self(**settings)
         return
@@ -107,7 +110,7 @@ class SettingsManager(object):
             setattr(self._project, k, f)
         # classes
         self.plugins = {c.lower(): self._instatiate(self.classes[c])
-                     for c in self.classes}
+                        for c in self.classes}
         for k, c in self.plugins.items():
             setattr(self._project, k, c)
         return
