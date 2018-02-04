@@ -17,10 +17,10 @@ try:
 except ImportError:
     raise ImportError("Please install Django: pip install django")
 
-from django.apps import AppConfig
+from django.apps import apps as djapps
 
 
-class BrowserConfig(AppConfig):
+class BrowserConfig(django.apps.AppConfig):
     """
     This is the app configuration of the modelmanager.plugins.browser app.
     """
@@ -38,6 +38,9 @@ class Browser:
 
         if not osp.exists(self.resourcedir):
             self._install()
+        # permanently setup django (will cause error with multiple prjects)
+        self.settings.setup()
+        self.update_db()
         return
 
     def _install(self):
@@ -51,8 +54,6 @@ class Browser:
             em = ('Cant install the browser resources. Do they already '
                   'exist in %s?' % self.resourcedir)
             raise OSError(em)
-        # install database
-        self.update_db()
         return
 
     def update_db(self, verbosity=0):
@@ -80,6 +81,9 @@ class Browser:
 
 
 class BrowserSettings:
+    # switch to track django setup for with block
+    setup_on_with = False
+
     def __init__(self, browser):
         self.project = browser.project
         self.browser = browser
@@ -100,12 +104,22 @@ class BrowserSettings:
 
         return
 
-    def __enter__(self):
+    def setup(self):
         """
         Setup django settings.
         """
         from modelmanager.plugins.browser import defaultsettings
-
+        # check if already configured
+        if django.conf.settings.configured:
+            conf_project = django.conf.settings.PROJECT
+            # check if same project is configured without comparing instances
+            if conf_project.resourcedir != self.project.resourcedir:
+                raise django.core.exceptions.ImproperlyConfigured(
+                      "Browser is already setup for project: %s\n" %
+                      conf_project.projectdir + "You need to unset it first.")
+                # conf_project.browser.settings.unset()
+            else:
+                return False
         # make sure the resourcedir is on sys.path
         if self.project.resourcedir not in sys.path:
             sys.path = [self.project.resourcedir] + sys.path
@@ -116,10 +130,21 @@ class BrowserSettings:
             django.setup()
         except Exception:
             raise #Exception('Failed to activate Django :(')
-        return
+        return True
 
-    def __exit__(self, exc_type, exc_value, traceback):
+    def unset(self):
         django.conf.settings._wrapped = django.conf.empty
         if self.resourcedir in sys.path:
             sys.path = list(filter(lambda a: a != self.resourcedir, sys.path))
         return
+
+    def __enter__(self):
+        if self.setup():
+            self.setup_on_with = True
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        if self.setup_on_with:
+            self.unset()
+
+    def __del__(self):
+        self.unset()

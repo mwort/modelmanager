@@ -30,21 +30,22 @@ class TestPlugin:
 """
 
 
+def create_project(projectdir):
+    os.makedirs(projectdir)
+    project = mm.project.setup(projectdir=projectdir)
+    with file(project.settings.file, 'w') as f:
+        f.write(TEST_SETTINGS)
+    project.settings.load()
+    return project
+
+
 class ProjectTestCase(unittest.TestCase):
     """Abstract class to initialise and clean a default project."""
 
     projectdir = 'testmodel'
 
     def setUp(self):
-        os.makedirs(self.projectdir)
-        self.project = mm.project.setup(projectdir=self.projectdir)
-        self.write_settings()
-        self.project.settings.load()
-        return
-
-    def write_settings(self):
-        with file(self.project.settings.file, 'w') as f:
-            f.write(TEST_SETTINGS)
+        self.project = create_project(self.projectdir)
         return
 
     def tearDown(self):
