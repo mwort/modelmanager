@@ -17,7 +17,6 @@ class Migration(migrations.Migration):
             name='Run',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('name', models.CharField(max_length=100)),
                 ('time', models.DateTimeField(auto_now_add=True, verbose_name=b'Time')),
                 ('type', models.CharField(choices=[(b'testing', b'testing'), (b'calibration', b'calibration'), (b'validation', b'validation'), (b'prediction', b'prediction')], default=b'testing', max_length=32, verbose_name=b'Type')),
                 ('notes', models.TextField(blank=True, verbose_name=b'Notes')),

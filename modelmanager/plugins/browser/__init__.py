@@ -79,6 +79,37 @@ class Browser:
         self.manage('runserver')
         return
 
+    @property
+    def tables(self):
+        """
+        Get all available tables from the plugin and the project.
+        """
+        with self.settings:
+            models = list(djapps.get_app_config('modelmanager').get_models())
+            models += list(djapps.get_app_config('browser').get_models())
+        models = {m.__name__.lower(): m for m in models}
+        return models
+
+    def get_table(self, tablename, **filters):
+        """
+        Get all rows from table or subset if filters are given.
+        """
+        model = self.tables[tablename]
+        with self.settings:
+            # return lists to actually read the QuerySet from the DB
+            if len(filters) > 0:
+                rows = list(model.objects.filter(**filters))
+            else:
+                rows = list(model.objects.all())
+        return rows
+
+    def insert(self, tablename, **modelfields):
+        Model = self.tables[tablename]
+        instance = Model(**modelfields)
+        with self.settings:
+            instance.save()
+        return instance
+
 
 class BrowserSettings:
     # switch to track django setup for with block

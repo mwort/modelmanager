@@ -32,6 +32,12 @@ class BrowserSetup(test_project.ProjectTestCase):
             from modelmanager.plugins.browser.models import Run
             self.assertEqual(apps.get_model('modelmanager.run'), Run)
 
+    def tearDown(self):
+        shutil.rmtree(self.project.projectdir)
+        self.project.browser.settings.unset()
+
+
+class Tables(test_project.ProjectTestCase):
     def test_project_model(self):
         with file(self.project.browser.resourcedir+'/models.py', 'w') as f:
             f.write(TEST_MODELS)
@@ -40,6 +46,18 @@ class BrowserSetup(test_project.ProjectTestCase):
         reload(models)
         self.assertEqual(apps.get_model('browser.testmodel'),
                          models.TestModel)
+
+    def test_table_read_write(self):
+        b = self.project.browser
+        model = b.tables['run']
+        run = model(notes='testing notes')
+        run.save()
+        run_read = model.objects.filter(notes__contains='testing').last()
+        self.assertEqual(run, run_read)
+        # with internal functions
+        run = b.insert('run', notes='tests notes')
+        run_read = b.get_table('run', notes__contains='tests')[0]
+        self.assertEqual(run, run_read)
 
     def tearDown(self):
         shutil.rmtree(self.project.projectdir)
