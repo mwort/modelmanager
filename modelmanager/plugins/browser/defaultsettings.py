@@ -33,7 +33,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'modelmanager.plugins.browser.BrowserConfig',
+    'modelmanager.plugins.browser.browser.BrowserConfig',
     'browser.BrowserResourcesConfig'
 ]
 
