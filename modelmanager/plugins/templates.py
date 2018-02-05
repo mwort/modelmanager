@@ -3,8 +3,9 @@ A plugin to read and write model (parameter) files based on a template system.
 """
 import os
 import os.path as osp
-import fnmatch
 import string
+
+from modelmanager import utils
 
 try:
     import parse
@@ -24,7 +25,7 @@ class Templates(object):
     Read/write values from/to any templated file:
     value = project.templates('key')
     project.templates(key=value)
-    
+
     Or from/to particular template:
     values = project.templates['partofpath'].read_values()  # dict of values
     project.templates['partofpath'].write_values(key=value)
@@ -69,10 +70,7 @@ class Templates(object):
         Get template instances by pattern.
         Returns a list of matching templates.
         """
-        matches = []
-        for root, dirnames, filenames in os.walk(self.resourcedir):
-            matches += [osp.relpath(osp.join(root, fn), self.resourcedir)
-                        for fn in fnmatch.filter(filenames, pattern)]
+        matches = utils.get_paths_pattern(pattern, self.resourcedir)
         tpts = [Template(osp.join(self.resourcedir, path),
                          osp.join(self.project.projectdir, path))
                 for path in matches]

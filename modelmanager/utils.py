@@ -1,5 +1,8 @@
 """All handy, general utility functionality used throughout the package."""
 
+import os
+import fnmatch
+
 
 def load_module_path(name, path):
     """Load a python module source file python version aware."""
@@ -17,3 +20,16 @@ def load_module_path(name, path):
         spec.loader.exec_module(m)
 
     return m
+
+
+def get_paths_pattern(pattern, startdir):
+    """
+    Get all paths (including in subdirectories) matching pattern.
+
+    Returns list of relative paths from startdir.
+    """
+    matches = []
+    for root, dirnames, filenames in os.walk(startdir):
+        matches += [os.path.relpath(os.path.join(root, fn), startdir)
+                    for fn in fnmatch.filter(filenames, pattern)]
+    return matches
