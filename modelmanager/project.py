@@ -21,8 +21,6 @@ class Project(object):
     All variables and fuctions are available to operate on the current model
     state.
     """
-    # defaults
-    settings_file = 'settings.py'
 
     def __init__(self, projectdir='.', **settings):
         self.projectdir = projectdir
@@ -37,7 +35,7 @@ def setup(projectdir='.', resourcedir='mm'):
     """Initialise a default modelmanager project in the current directory."""
 
     resourcedir = osp.join(projectdir, resourcedir)
-    settings_path = osp.join(resourcedir, Project.settings_file)
+    settings_path = osp.join(resourcedir, SettingsManager.settings_file_name)
     print('Initialising a new modelmanager project in: %s\n' % projectdir +
           'with modelmanager files in: %s' % settings_path)
     # create projectdir if not existing

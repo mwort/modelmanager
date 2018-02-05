@@ -19,6 +19,8 @@ class SettingsManager(object):
     Object to manage everything defined in the settings file.
     '''
 
+    settings_file_name = 'settings.py'
+
     def __init__(self, project):
         self._project = project
         # attributes assigned through load
@@ -55,9 +57,9 @@ class SettingsManager(object):
 
         # search settings file in any directory in this directory
         settings_dotglob = osp.join(self._project.projectdir, '.*',
-                                    self._project.settings_file)
+                                    self.settings_file_name)
         settings_glob = osp.join(self._project.projectdir, '*',
-                                 self._project.settings_file)
+                                 self.settings_file_name)
 
         sfp = glob(settings_glob) + glob(settings_dotglob)
         # warn if other than 1
