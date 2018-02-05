@@ -2,6 +2,7 @@
 The global Django admin browser configuration.
 """
 import csv
+import os.path as osp
 
 from django.contrib.auth.models import User, Group
 from django.contrib import admin
@@ -63,15 +64,32 @@ def export_to_csv(modeladmin, request, queryset):
     return response
 
 
+def file_preview_field(field):
+    img = u'<img style="max-height:100px;"src="{url}" />'
+    href = u'<a href="{url}">{content}</a>'
+
+    def file(obj):
+        ffi = getattr(obj, field.name)
+        if osp.splitext(ffi.url)[1] in ['.jpg', '.png']:
+            elem = href.format(url=ffi.url, content=img.format(url=ffi.url))
+        else:
+            elem = href.format(url=ffi.url, content=ffi.name)
+        return elem
+    file.allow_tags = True
+    return file
+
+
 def make_default_model_admin(model):
     meta = model._meta
     fields = meta.fields
     field_names = [f.name for f in fields]
 
-    # make links out of ForeignKey s
+    # fields for special fields
     for f in fields:
         if f.get_internal_type() == 'ForeignKey':
             field_names[field_names.index(f.name)] = related_model_link(f)
+        if f.get_internal_type() == 'FileField':
+            field_names[field_names.index(f.name)] = file_preview_field(f)
     # add inlines for related models
     related_inlines = [make_default_inline(m.related_model)
                        for m in meta.related_objects]
@@ -110,7 +128,7 @@ def make_default_inline(ilmodel):
 def related_model_link(field):
     def link_fk(obj):
         relmodel = getattr(obj, field.name)
-        href = '<a href="{}">{}</a>'
+        href = '<b><a href="{}">{}</a></b>'
         urlname = ("admin:%s_%s_change" % (relmodel._meta.app_label,
                    relmodel._meta.verbose_name_raw))
         url = reverse(urlname, args=(relmodel.pk,))

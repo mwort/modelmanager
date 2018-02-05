@@ -128,7 +128,9 @@ class BrowserSettings:
             "DATABASES": {
                 'default': {
                     'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME': self.dbpath}}}
+                    'NAME': self.dbpath}},
+            "MEDIA_ROOT": osp.join(self.browser.resourcedir, 'files'),
+            "MEDIA_URL": osp.join(self.browser.resourcedir, 'files')+'/'}
         # override them from settings file
         if hasattr(self.project, 'django_settings'):
             self.django_settings.update(self.project.django_settings)
