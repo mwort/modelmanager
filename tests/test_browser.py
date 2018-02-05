@@ -49,15 +49,15 @@ class Tables(test_project.ProjectTestCase):
 
     def test_table_read_write(self):
         b = self.project.browser
-        model = b.tables['run']
+        model = b.models['run']
         run = model(notes='testing notes')
         run.save()
         run_read = model.objects.filter(notes__contains='testing').last()
         self.assertEqual(run, run_read)
         # with internal functions
-        run = b.insert('run', notes='tests notes')
-        run_read = b.get_table('run', notes__contains='tests')[0]
-        self.assertEqual(run, run_read)
+        run = b.insert('run', notes='tests notes')   # returns a run instance
+        run_read = b.get_table('run', notes__contains='tests')  # list of dicts
+        self.assertEqual(run.notes, run_read[0]['notes'])
 
     def tearDown(self):
         shutil.rmtree(self.project.projectdir)

@@ -80,9 +80,9 @@ class Browser:
         return
 
     @property
-    def tables(self):
+    def models(self):
         """
-        Get all available tables from the plugin and the project.
+        Get all available Django models from the plugin and the project.
         """
         with self.settings:
             models = list(djapps.get_app_config('modelmanager').get_models())
@@ -94,17 +94,17 @@ class Browser:
         """
         Get all rows from table or subset if filters are given.
         """
-        model = self.tables[tablename]
+        model = self.models[tablename]
         with self.settings:
             # return lists to actually read the QuerySet from the DB
             if len(filters) > 0:
-                rows = list(model.objects.filter(**filters))
+                rows = list(model.objects.filter(**filters).values())
             else:
-                rows = list(model.objects.all())
+                rows = list(model.objects.values())
         return rows
 
     def insert(self, tablename, **modelfields):
-        Model = self.tables[tablename]
+        Model = self.models[tablename]
         instance = Model(**modelfields)
         with self.settings:
             instance.save()
