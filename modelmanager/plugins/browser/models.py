@@ -6,6 +6,9 @@ class Run(models.Model):
     tags = models.CharField(max_length=1024, blank=True)
     notes = models.TextField('Notes', blank=True)
 
+    def __unicode__(self):
+        return u'Run %i' % self.pk
+
 
 class TaggedValue(models.Model):
     class Meta:

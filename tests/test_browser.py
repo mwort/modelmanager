@@ -5,7 +5,9 @@ import shutil
 import cProfile, pstats
 
 from django.apps import apps
-from modelmanager.plugins import browser
+from django.test import Client as TestClient
+
+from modelmanager.plugins import Browser
 
 import test_project
 
@@ -21,21 +23,23 @@ class TestModel(models.Model):
 """
 
 
-class BrowserSetup(test_project.ProjectTestCase):
-
-    def test_init(self):
-        self.assertTrue(isinstance(self.project.browser, browser.Browser))
-
-        with self.project.browser.settings:
-            from modelmanager.plugins.browser.models import Run
-            self.assertEqual(apps.get_model('modelmanager.run'), Run)
-
+class BrowserProjectTestCase(test_project.ProjectTestCase):
     def tearDown(self):
         shutil.rmtree(self.project.projectdir)
         self.project.browser.settings.unset()
 
 
-class Tables(test_project.ProjectTestCase):
+class BrowserSetup(BrowserProjectTestCase):
+
+    def test_init(self):
+        self.assertTrue(isinstance(self.project.browser, Browser))
+
+        with self.project.browser.settings:
+            from modelmanager.plugins.browser.models import Run
+            self.assertEqual(apps.get_model('modelmanager.run'), Run)
+
+
+class Tables(BrowserProjectTestCase):
     def test_project_model(self):
         with file(self.project.browser.resourcedir+'/models.py', 'w') as f:
             f.write(TEST_MODELS)
@@ -57,9 +61,20 @@ class Tables(test_project.ProjectTestCase):
         run_read = b.get_table('run', notes__contains='tests')  # list of dicts
         self.assertEqual(run.notes, run_read[0]['notes'])
 
-    def tearDown(self):
-        shutil.rmtree(self.project.projectdir)
-        self.project.browser.settings.unset()
+
+class Admin(BrowserProjectTestCase):
+    urls = ['/modelmanager/',
+            '/modelmanager/run/',
+            '/modelmanager/run/1/change/',
+            '/modelmanager/parameter/',
+            '/modelmanager/parameter/1/change/']
+
+    def test_urls(self):
+        run = self.project.browser.insert('run', tags='test t1')
+        self.project.browser.insert('parameter', name='t1', value=2.1, run=run)
+        client = TestClient()
+        for u in self.urls:
+            self.assertEqual(client.get(u).status_code, 200)
 
 
 if __name__ == '__main__':
