@@ -1,11 +1,19 @@
 """
 The global Django admin browser configuration.
 """
+import csv
+
 from django.contrib.auth.models import User, Group
 from django.contrib import admin
 from django.apps import apps
 from django.core.urlresolvers import reverse
+from django.http import HttpResponse
 from django.utils.safestring import mark_safe
+
+if True:  # PY 27
+    import StringIO as io
+else:
+    import io
 
 
 class NoAuthentication(object):
@@ -28,6 +36,31 @@ class NoAuthentication(object):
         response = self.get_response(request)
 
         return response
+
+
+def export_to_csv(modeladmin, request, queryset):
+    """
+    Action to export a queryset to csv file.
+
+    Only PY2.7 supported, converting everything to str.
+    """
+    buf = io.StringIO()
+    headers = [str(f.name) for f in queryset.model._meta.fields]
+    writer = csv.writer(buf)
+    writer.writerow(headers)
+
+    for obj in queryset:
+        row = []
+        for field in headers:
+            val = getattr(obj, field)
+            row.append(str(val))
+        writer.writerow(row)
+    buf.seek(0)
+    response = HttpResponse(buf, content_type='text/csv')
+    content = ('attachment; filename=%s.csv'
+               % queryset.model._meta.verbose_name_raw)
+    response['Content-Disposition'] = content
+    return response
 
 
 def make_default_model_admin(model):
@@ -55,6 +88,7 @@ def make_default_model_admin(model):
         list_display_links = field_names
         search_fields = field_names
         list_filter = simple_filter_fields(fields)
+        actions = [export_to_csv]
 
     return DefaultModelAdmin
 
