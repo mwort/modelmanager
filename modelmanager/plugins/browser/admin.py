@@ -1,3 +1,6 @@
+"""
+The global Django admin browser configuration.
+"""
 from django.contrib.auth.models import User, Group
 from django.contrib import admin
 from django.apps import apps
@@ -51,8 +54,15 @@ def make_default_model_admin(model):
         inlines = related_inlines
         list_display_links = field_names
         search_fields = field_names
+        list_filter = simple_filter_fields(fields)
 
     return DefaultModelAdmin
+
+
+def simple_filter_fields(fields):
+    filterable = ("BooleanField CharField DateField DateTimeField "
+                  "IntegerField ForeignKey ManyToManyField".split())
+    return [f.name for f in fields if f.get_internal_type() in filterable]
 
 
 def make_default_inline(ilmodel):
