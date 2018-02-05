@@ -55,4 +55,4 @@ class TestTemplates(test_project.ProjectTestCase):
 if __name__ == '__main__':
     cProfile.run('unittest.main()', 'pstats')
     # print profile stats ordered by time
-    pstats.Stats('pstats').strip_dirs().sort_stats('time').print_stats(10)
+    pstats.Stats('pstats').strip_dirs().sort_stats('time').print_stats(5)
