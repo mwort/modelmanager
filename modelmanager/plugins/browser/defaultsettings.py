@@ -27,14 +27,15 @@ ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver"]
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'browser.BrowserResourcesConfig',
     'django.contrib.auth',
+    # needs auth models
+    'modelmanager.plugins.browser.browser.BrowserConfig',
+    'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'modelmanager.plugins.browser.browser.BrowserConfig',
-    'browser.BrowserResourcesConfig'
 ]
 
 MIDDLEWARE = [
