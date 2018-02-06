@@ -1,5 +1,6 @@
 from django.db import models
 import os.path as osp
+from django.core.files import File
 
 
 class Run(models.Model):
@@ -36,5 +37,24 @@ class ResultIndicator(TaggedValue):
     pass
 
 
-class ResultFile(NameTagged):
+class ResultFile(RunTagged):
     file = models.FileField(upload_to="results")
+
+    def __init__(self, *args, **kwargs):
+        # handle different file objects on construction
+        if 'file' in kwargs:
+            f = kwargs.pop('file')
+            if type(f) == str:
+                f = file(f, 'rb+')
+            if isinstance(f, file):
+                f = File(f)
+            if isinstance(f, File):
+                kwargs['file'] = f
+            else:
+                raise TypeError('file must be a path string, a file or a '
+                                'django.core.files.File instance.')
+        super(ResultFile, self).__init__(*args, **kwargs)
+
+    def delete(self):
+        self.file.delete()
+        super(ResultFile, self).delete()

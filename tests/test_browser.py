@@ -6,6 +6,7 @@ import cProfile, pstats
 
 from django.apps import apps
 from django.test import Client as TestClient
+from django.conf import settings as djsettings
 
 from modelmanager.plugins import Browser
 
@@ -37,10 +38,13 @@ class BrowserProjectTestCase(unittest.TestCase):
         # populate standard models/tables
         run = self.models['run'](notes='testing notes')
         run.save()
+        self.test_run = run
         param = self.models['parameter'](name='xyz', value=1.33, run=run)
         param.save()
         result = self.models['resultindicator'](name='x', value=0.8, run=run)
         result.save()
+        # test browser interaction
+        self.client = TestClient()
 
     def tearDown(self):
         shutil.rmtree(self.project.projectdir)
@@ -88,9 +92,37 @@ class Admin(BrowserProjectTestCase):
             '/modelmanager/parameter/1/change/']
 
     def test_urls(self):
-        client = TestClient()
         for u in self.urls:
-            self.assertEqual(client.get(u).status_code, 200)
+            self.assertEqual(self.client.get(u).status_code, 200)
+
+    def test_file_upload(self):
+        with open(__file__) as f:
+            data = {'run': 1, 'name': "something", 'file': f}
+            response = self.client.post('/modelmanager/resultfile/add/', data)
+        self.assertEqual(response.status_code, 302)  # redirected on success
+        resfile = self.browser.models['resultfile'].objects.last()
+        self.assertEqual(resfile.file.read(), file(__file__).read())
+
+
+class Files(BrowserProjectTestCase):
+
+    def test_file_save_types(self):
+        from django.core.files import File as DjFile
+        for f in [DjFile(file(__file__)), file(__file__), __file__]:
+            resfile = self.browser.insert('resultfile', name='result',
+                                          file=f, run=self.test_run)
+            newpath = resfile.file.path
+            self.assertTrue(os.path.exists(newpath))
+            resfile = self.browser.models['resultfile'].objects.first()
+            self.assertEqual(newpath, resfile.file.path)
+            resfile.delete()
+            self.assertFalse(os.path.exists(newpath))
+
+        with self.assertRaises(TypeError):
+            resfile = self.browser.insert('resultfile', name='result',
+                                          file=123, run=self.test_run)
+
+        return
 
 
 if __name__ == '__main__':
