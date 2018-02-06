@@ -6,11 +6,10 @@ import cProfile, pstats
 
 from django.conf import settings as djsettings
 import modelmanager as mm
-from modelmanager.plugins import browser
 
-import test_project
+from test_project import create_project
 
-test_project.TEST_SETTINGS += """
+TEST_SETTINGS = """
 from modelmanager.plugins.browser import Browser
 """
 
@@ -23,7 +22,7 @@ class MultiProject(unittest.TestCase):
 
         self.projects = []
         for n in self.projectdirs:
-            p = test_project.create_project(n)
+            p = create_project(n, TEST_SETTINGS)
             print('Django configured: %s' % djsettings.configured)
             p = mm.Project(n)
             print('Django configured: %s' % djsettings.configured)

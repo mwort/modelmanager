@@ -31,11 +31,11 @@ class TestPlugin:
 """
 
 
-def create_project(projectdir):
+def create_project(projectdir, settingsstr):
     os.makedirs(projectdir)
     project = mm.project.setup(projectdir=projectdir)
     with file(project.settings.file, 'w') as f:
-        f.write(TEST_SETTINGS)
+        f.write(settingsstr)
     project.settings.load()
     return project
 
@@ -46,7 +46,7 @@ class ProjectTestCase(unittest.TestCase):
     projectdir = 'testmodel'
 
     def setUp(self):
-        self.project = create_project(self.projectdir)
+        self.project = create_project(self.projectdir, TEST_SETTINGS)
         return
 
     def tearDown(self):
