@@ -109,7 +109,7 @@ class Files(BrowserProjectTestCase):
     def test_file_save_types(self):
         from django.core.files import File as DjFile
         for f in [DjFile(file(__file__)), file(__file__), __file__]:
-            resfile = self.browser.insert('resultfile', name='result',
+            resfile = self.browser.insert('resultfile',
                                           file=f, run=self.test_run)
             newpath = resfile.file.path
             self.assertTrue(os.path.exists(newpath))
@@ -119,7 +119,7 @@ class Files(BrowserProjectTestCase):
             self.assertFalse(os.path.exists(newpath))
 
         with self.assertRaises(TypeError):
-            resfile = self.browser.insert('resultfile', name='result',
+            resfile = self.browser.insert('resultfile',
                                           file=123, run=self.test_run)
 
         return
