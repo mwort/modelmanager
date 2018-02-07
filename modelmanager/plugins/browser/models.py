@@ -1,8 +1,15 @@
+"""
+This is a collection of meta models to be subclassed in the projects
+browser/models.py file.
+"""
+
 from django.db import models
-from django.core.files import File
+from django.core.files import File as djFile
 
 
 class Run(models.Model):
+    class Meta:
+        abstract = True
     time = models.DateTimeField('Time', auto_now_add=True)
     tags = models.CharField(max_length=1024, blank=True)
     notes = models.TextField('Notes', blank=True)
@@ -14,7 +21,7 @@ class Run(models.Model):
 class RunTagged(models.Model):
     class Meta:
         abstract = True
-    run = models.ForeignKey(Run, on_delete=models.CASCADE)
+    run = models.ForeignKey('browser.Run', on_delete=models.CASCADE)
     tags = models.CharField(max_length=1024, blank=True)
 
 
@@ -28,15 +35,10 @@ class TaggedValue(RunTagged):
                                 decimal_places=DECIMAL_PLACES)
 
 
-class Parameter(TaggedValue):
-    pass
+class File(RunTagged):
+    class Meta:
+        abstract = True
 
-
-class ResultIndicator(TaggedValue):
-    pass
-
-
-class ResultFile(RunTagged):
     file = models.FileField(upload_to="results")
 
     def __init__(self, *args, **kwargs):
@@ -46,14 +48,14 @@ class ResultFile(RunTagged):
             if type(f) == str:
                 f = file(f, 'rb+')
             if isinstance(f, file):
-                f = File(f)
-            if isinstance(f, File):
+                f = djFile(f)
+            if isinstance(f, djFile):
                 kwargs['file'] = f
             else:
                 raise TypeError('file must be a path string, a file or a '
                                 'django.core.files.File instance.')
-        super(ResultFile, self).__init__(*args, **kwargs)
+        super(File, self).__init__(*args, **kwargs)
 
     def delete(self):
         self.file.delete()
-        super(ResultFile, self).delete()
+        super(File, self).delete()

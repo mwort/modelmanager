@@ -57,8 +57,8 @@ class BrowserSetup(BrowserProjectTestCase):
         self.assertTrue(isinstance(self.project.browser, Browser))
 
         with self.project.browser.settings:
-            from modelmanager.plugins.browser.models import Run
-            self.assertEqual(apps.get_model('modelmanager.run'), Run)
+            from browser.models import Run
+            self.assertEqual(apps.get_model('browser.run'), Run)
 
 
 class Tables(BrowserProjectTestCase):
@@ -85,11 +85,11 @@ class Tables(BrowserProjectTestCase):
 
 
 class Admin(BrowserProjectTestCase):
-    urls = ['/modelmanager/',
-            '/modelmanager/run/',
-            '/modelmanager/run/1/change/',
-            '/modelmanager/parameter/',
-            '/modelmanager/parameter/1/change/']
+    urls = ['/browser/',
+            '/browser/run/',
+            '/browser/run/1/change/',
+            '/browser/parameter/',
+            '/browser/parameter/1/change/']
 
     def test_urls(self):
         for u in self.urls:
@@ -98,7 +98,7 @@ class Admin(BrowserProjectTestCase):
     def test_file_upload(self):
         with open(__file__) as f:
             data = {'run': 1, 'name': "something", 'file': f}
-            response = self.client.post('/modelmanager/resultfile/add/', data)
+            response = self.client.post('/browser/resultfile/add/', data)
         self.assertEqual(response.status_code, 302)  # redirected on success
         resfile = self.browser.models['resultfile'].objects.last()
         self.assertEqual(resfile.file.read(), file(__file__).read())

@@ -15,5 +15,4 @@ class BrowserResourcesConfig(AppConfig):
     project/resourcedir/browser directory.
     """
     name = label = 'browser'
-    verbose_name = ('Modelmanager project %s' %
-                    osp.basename(settings.PROJECT.projectdir))
+    verbose_name = "Database"
