@@ -147,5 +147,4 @@ def register_models(applabel):
 
 admin.site.unregister(User)
 admin.site.unregister(Group)
-register_models('modelmanager')
 register_models('browser')
