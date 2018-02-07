@@ -51,22 +51,40 @@ def execute_from_commandline():
 def add_subparser_functions(mainparser, functions, **kwargs):
     subparser = mainparser.add_subparsers(**kwargs)
     for l, f in functions.items():
-        # get function arguments
-        fspec = inspect.getargspec(f)
-        # create the parser for the functions
-        nargs = len(fspec.args) - len(fspec.defaults or [])
-        defs = zip(fspec.args, [None]*nargs + list(fspec.defaults or []))
-        # remove first argument if not an optional argument
-        argsdef = [(a, d) for i, (a, d) in enumerate(defs)
-                   if not (i == 0 and d is None)]
-        callsig = ['%s=%r' % (a, d) if d is not None else a
-                   for a, d in argsdef]
-        helpstr = '(%s) ' % ', '.join(callsig) + (f.__doc__ or '')
+        fi = Function(f)
+        helpstr = '(%s) ' % fi.signiture + fi.doc
         fparser = subparser.add_parser(l, help=helpstr)
         # function arguments
-        for a, d in argsdef:
+        for a, d in fi.arguments:
             args = a if d is None else '--'+a
             hlpstr = '(default={0!r})'.format(d) if d is not None else ''
             typ = type(d) if d else str
             fparser.add_argument(args, default=d, help=hlpstr, type=typ)
     return subparser
+
+
+class Function(object):
+    """
+    Representation of a project function with all of attributes.
+    """
+    def __init__(self, function):
+        # get function arguments
+        fspec = inspect.getargspec(function)
+        # create the parser for the functions
+        self.defaults = list(fspec.defaults or [])
+        self.noptionalargs = len(fspec.args) - len(self.defaults)
+        self.arguments = zip(fspec.args,
+                             [None]*self.noptionalargs + self.defaults)
+        self.ismethod = inspect.ismethod(function)
+        if self.ismethod:
+            # remove first argument if not an optional argument
+            self.arguments = [(a, d) for i, (a, d) in enumerate(self.arguments)
+                              if not (i == 0 and d is None)]
+            self.instance = (function.im_self if hasattr(function, 'im_self')
+                             else None)
+        self.signiture = ', '.join(['%s=%r' % (a, d) if d is not None else a
+                                    for a, d in self.arguments])
+        self.doc = (function.__doc__ or '')
+        self.name = function.__name__
+        self.kwargs = (fspec.keywords is not None)
+        return
