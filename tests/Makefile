@@ -1,14 +1,16 @@
+PY = python
+PLUGINS = browser browser_multiproject templates clones
 
 all: default plugins
 
 default:
-	python test_project.py -v
+	$(PY) test_project.py -v
 
 plugins:
-	python test_browser.py -v
-	python test_browser_multiproject.py -v
-	python test_templates.py -v
-	python test_clones.py -v
+	for p in $(PLUGINS); do $(PY) test_$${p}.py ; done
 
 clean:
 	git clean -d -f -x ./*
+
+coverage: all
+	coverage html -i --include=../modelmanager/*
