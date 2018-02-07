@@ -1,6 +1,6 @@
 #/usr/bin/env python
 
-from modelmanager import commandline
+from modelmanager import api
 
 if __name__=='__main__':
-    print(commandline.execute_from_commandline())
+    print(api.execute_from_commandline())
