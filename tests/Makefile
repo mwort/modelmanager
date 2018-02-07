@@ -8,6 +8,7 @@ plugins:
 	python test_browser.py -v
 	python test_browser_multiproject.py -v
 	python test_templates.py -v
+	python test_clones.py -v
 
 clean:
 	git clean -d -f -x ./*
