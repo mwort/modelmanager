@@ -30,6 +30,11 @@ class Project(object):
         self.settings.load(**settings)
         return
 
+    def __repr__(self):
+        rpd = osp.relpath(self.projectdir, os.getcwd())
+        r = ('<%s instance in %s >' % (self.__class__.__name__, rpd))
+        return r
+
 
 def setup(projectdir='.', resourcedir='mm'):
     """Initialise a default modelmanager project in the current directory."""
@@ -37,7 +42,7 @@ def setup(projectdir='.', resourcedir='mm'):
     resourcedir = osp.join(projectdir, resourcedir)
     settings_path = osp.join(resourcedir, SettingsManager.settings_file_name)
     print('Initialising a new modelmanager project in: %s\n' % projectdir +
-          'with modelmanager files in: %s' % settings_path)
+          'with settings file in: %s' % settings_path)
     # create projectdir if not existing
     if not osp.exists(projectdir):
         os.mkdir(projectdir)
