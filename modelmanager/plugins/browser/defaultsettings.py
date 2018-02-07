@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'django.contrib.auth',
     # needs auth models
     'modelmanager.plugins.browser.browser.BrowserConfig',
+    'modelmanager.plugins.browser.api.APIConfig',
     'django.contrib.admin',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
