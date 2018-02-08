@@ -14,6 +14,9 @@ from test_project import create_project
 
 TEST_SETTINGS = """
 from modelmanager.plugins.browser import Browser
+
+def test_function(project, s='hello', **kwargs):
+    return ','.join(kwargs.values()) if len(kwargs)>0 else s
 """
 
 TEST_MODELS = """
@@ -54,8 +57,8 @@ class BrowserProjectTestCase(unittest.TestCase):
 class BrowserSetup(BrowserProjectTestCase):
 
     def test_init(self):
-        self.assertTrue(isinstance(self.project.browser, Browser))
-
+        self.assertTrue(isinstance(self.browser, Browser))
+        self.assertTrue(os.path.exists(self.browser.settings.tmpfilesdir))
         with self.project.browser.settings:
             from browser.models import Run
             self.assertEqual(apps.get_model('browser.run'), Run)
@@ -110,10 +113,30 @@ class ApiAdmin(BrowserProjectTestCase):
             '/api/setting/',
             '/api/function/1/change/']
 
+    def check_url(self, url):
+        print('Checking %s' % url)
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        return response
+
     def test_urls(self):
         for u in self.urls:
-            print('Checking %s' % u)
-            self.assertEqual(self.client.get(u).status_code, 200)
+            self.check_url(u)
+
+    def test_call(self):
+        from modelmanager.plugins.browser.api import models
+        # make sure function table is populated
+        self.check_url('/api/function/')
+        fobj = models.Function.objects.get(name='test_function')
+        response = self.check_url('/api/function/%s/change/call/' % fobj.id)
+        self.assertEqual(response.content, 'hello')
+        models.Argument(name='world', value='"hello"', function=fobj).save()
+        response = self.check_url('/api/function/%s/change/call/' % fobj.id)
+        self.assertEqual(response.content, 'hello')
+        models.Argument(name='world', value='project.resourcedir',
+                        function=fobj).save()
+        response = self.check_url('/api/function/%s/change/call/' % fobj.id)
+        self.assertEqual(response.content, self.project.resourcedir)
 
 
 class Files(BrowserProjectTestCase):

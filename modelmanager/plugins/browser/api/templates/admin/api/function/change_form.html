@@ -1,0 +1,33 @@
+{% extends "admin/change_form.html" %}
+
+{% block submit_buttons_bottom %}
+
+<div class="submit-row">
+<input type="submit" value="Update" name="_continue">
+</div>
+
+<div class="module">
+<h2>RESULTS</h2>
+
+<div id='results'>
+
+</div>
+
+</div>
+
+{% endblock %}
+
+
+{% block admin_change_form_document_ready %}
+{{ block.super }}
+<script type="text/javascript">
+
+django.jQuery.ajax({url: 'call', // will be appended to current url
+                    async: true,
+                    success: function (d) {django.jQuery('#results').append(d)},
+                    error: function (e) {console.log(e)}
+    });
+
+</script>
+
+{% endblock %}

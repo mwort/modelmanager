@@ -7,7 +7,7 @@ modelmanager package and one in the project/resourcedir/browser directory.
 While the first is fully importable (i.e. is on your PYTHONPATH), the latter
 is not and should thus only be accessed through the browser object.
 """
-
+import os
 import os.path as osp
 import sys
 import shutil
@@ -25,11 +25,12 @@ class Browser:
     def __init__(self, project):
         self.project = project
         self.resourcedir = osp.join(project.resourcedir, 'browser')
-        self.settings = BrowserSettings(self)
 
         if not osp.exists(self.resourcedir):
             self._install()
+
         # permanently setup django (will cause error with multiple prjects)
+        self.settings = BrowserSettings(self)
         self.settings.setup()
         self.update_db()
         return
@@ -110,7 +111,10 @@ class BrowserSettings:
         self.browser = browser
         self.resourcedir = self.project.resourcedir
         self.dbpath = osp.join(self.browser.resourcedir, 'db.sqlite3')
-
+        self.filesdir = osp.join(self.browser.resourcedir, 'files/')
+        self.tmpfilesdir = osp.join(self.filesdir, 'tmp/')
+        if not osp.exists(self.tmpfilesdir):
+            os.mkdir(self.tmpfilesdir)
         # Project-specific Django settings
         self.django_settings = {
             "BASE_DIR": self.project.resourcedir,
@@ -119,8 +123,8 @@ class BrowserSettings:
                 'default': {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME': self.dbpath}},
-            "MEDIA_ROOT": osp.join(self.browser.resourcedir, 'files'),
-            "MEDIA_URL": osp.join(self.browser.resourcedir, 'files')+'/'}
+            "MEDIA_ROOT": self.filesdir,
+            "MEDIA_URL": self.filesdir}
         # override them from settings file
         if hasattr(self.project, 'django_settings'):
             self.django_settings.update(self.project.django_settings)
@@ -159,6 +163,9 @@ class BrowserSettings:
         django.conf.settings._wrapped = django.conf.empty
         if self.resourcedir in sys.path:
             sys.path = list(filter(lambda a: a != self.resourcedir, sys.path))
+        # clear files tmpdir
+        if osp.exists(self.tmpfilesdir):
+            shutil.rmtree(self.tmpfilesdir)
         return
 
     def __enter__(self):

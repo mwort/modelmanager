@@ -210,7 +210,9 @@ class Function(object):
         self.__doc__ = self.doc
         self.name = function.__name__
         self.kwargs = (fspec.keywords is not None)
+        self.varargs = (fspec.varargs is not None)
         self.function = function
+        self.code = "".join(inspect.getsourcelines(function)[0])
         return
 
     def __call__(self, *args, **kwargs):
