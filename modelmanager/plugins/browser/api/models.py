@@ -16,6 +16,10 @@ class Function(models.Model):
     kwargs = models.BooleanField(verbose_name='Accept any keyword',
                                  default=False)
 
+    def __unicode__(self):
+        plugin = self.plugin if self.plugin else 'project'
+        return u'%s.%s' % (plugin, self.name)
+
 
 class Argument(models.Model):
     function = models.ForeignKey(Function)

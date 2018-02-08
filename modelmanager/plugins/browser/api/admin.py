@@ -13,7 +13,7 @@ def update_functions():
     from django.conf import settings
     project = settings.PROJECT
     # project functions
-    pfunctions = [(None, f) for n, f in project.settings.functions.values()]
+    pfunctions = [('', f) for f in project.settings.functions.values()]
     # plugin functions
     for p, (_, methods) in settings.PROJECT.settings.plugins.items():
         pfunctions.extend([(p, m) for m in methods.values()])
@@ -30,25 +30,12 @@ def update_functions():
             # add arguments
             args = [dict(name=n, function=fo)
                     for n in f.positional_arguments]
-            args += [dict(name=n, value=d, function=fo)
+            args += [dict(name=n, value='%r' % d, function=fo)
                      for n, d in zip(f.optional_arguments, f.defaults)]
             # insert
             for a in args:
                 models.Argument(**a).save()
     return
-
-
-class ArgumentInlineAdmin(admin.TabularInline):
-    model = models.Argument
-    extra = 0
-
-    def has_add_permission(self, request):
-        """Disable Add another if kwargs=False"""
-        return False
-
-    def has_delete_permission(self, request, obj=None):
-        """Disable delete tick box."""
-        return False
 
 
 def function_signiture(obj):
@@ -61,12 +48,47 @@ class FunctionAdmin(admin.ModelAdmin):
     list_display = ['plugin', 'name', function_signiture, 'doc']
     list_display_links = ['name']
     readonly_fields = ['name', 'kwargs', 'doc', 'plugin']
-    inlines = [ArgumentInlineAdmin]
-    search_fields = ['name']
+    inlines = []
+    search_fields = ['plugin', 'name']
+
+    def get_form(self, request, obj=None, **kwargs):
+        # due to django admin form fields caching you must
+        # redefine inlines on every `get_form()` call
+        if (obj):
+            self.inlines = []
+
+        if len(obj.argument_set.all()) > 0:
+            class ArgumentInlineAdmin(admin.TabularInline):
+                model = models.Argument
+                extra = 0
+                kwargs = obj.kwargs
+
+                def has_add_permission(self, request):
+                    """Disable Add another if kwargs=False"""
+                    return self.kwargs
+
+                def has_delete_permission(self, request, obj=None):
+                    """Disable delete tick box."""
+                    return self.kwargs
+
+            self.inlines = [ArgumentInlineAdmin]
+        return super(FunctionAdmin, self).get_form(request, obj, **kwargs)
 
     def get_queryset(self, request):
         update_functions()
         return super(FunctionAdmin, self).get_queryset(request)
+
+    def has_add_permission(self, request):
+        """Disable Add another if kwargs=False"""
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Disable Add another if kwargs=False"""
+        return True
+
+    def has_delete_permission(self, request, obj=None):
+        """Disable delete tick box."""
+        return False
 
 
 def update_settings():
@@ -88,6 +110,19 @@ class SettingAdmin(admin.ModelAdmin):
     def get_queryset(self, request):
         update_settings()
         return super(SettingAdmin, self).get_queryset(request)
+
+    def has_add_permission(self, request):
+
+        """Disable Add another if kwargs=False"""
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        """Disable Add another if kwargs=False"""
+        return True
+
+    def has_delete_permission(self, request, obj=None):
+        """Disable delete tick box."""
+        return False
 
 
 admin.site.register(models.Function, FunctionAdmin)
