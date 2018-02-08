@@ -101,6 +101,7 @@ class SettingsManager(object):
                 # will be instatiated later when all variables and
                 # functions are available
                 self.classes[name] = obj
+
             else:
                 self.variables[name] = obj
         # attach to project
@@ -110,11 +111,18 @@ class SettingsManager(object):
         #  functions (name is same as defined in settings)
         for k, f in self.functions.items():
             setattr(self._project, k, f)
+            # store as Function
+            self.functions[k] = Function(f)
         # classes
-        self.plugins = {c.lower(): self._instatiate(self.classes[c])
-                        for c in self.classes}
-        for k, c in self.plugins.items():
-            setattr(self._project, k, c)
+        self.plugins = {}
+        for k, c in self.classes.items():
+            instance = self._instatiate(c)
+            name = k.lower()
+            methods = inspect.getmembers(instance, predicate=inspect.ismethod)
+            methods = {n: Function(m) for (n, m) in methods
+                       if not n.startswith('_')}
+            setattr(self._project, name, instance)
+            self.plugins[name] = (instance, methods)
         return
 
     def _instatiate(self, cla):
@@ -173,3 +181,40 @@ class SettingsManager(object):
         ppath = osp.abs(self.projectdir)
         rep = '<modelmanager.settings.SettingsManager for %s>' % ppath
         return rep
+
+
+class Function(object):
+    """
+    Representation of a project function.
+    """
+    def __init__(self, function):
+        if isinstance(function, Function):
+            function = function.function
+        # get function arguments
+        fspec = inspect.getargspec(function)
+        # create the parser for the functions
+        self.defaults = list(fspec.defaults or [])
+        nposargs = len(fspec.args) - len(self.defaults)
+        self.positional_arguments = list(fspec.args)[:nposargs]
+        self.optional_arguments = list(fspec.args)[nposargs:]
+        self.ismethod = inspect.ismethod(function)
+        if self.ismethod:
+            # remove first argument if not an optional argument
+            self.positional_arguments = self.positional_arguments[1:]
+            self.instance = (function.im_self if hasattr(function, 'im_self')
+                             else None)
+        opsign = ['%s=%r' % (a, d) for a, d in zip(self.optional_arguments,
+                                                   self.defaults)]
+        self.signiture = ', '.join(self.positional_arguments + opsign)
+        self.doc = (function.__doc__ or '')
+        self.__doc__ = self.doc
+        self.name = function.__name__
+        self.kwargs = (fspec.keywords is not None)
+        self.function = function
+        return
+
+    def __call__(self, *args, **kwargs):
+        return self.function(*args, **kwargs)
+
+    def __repr__(self):
+        return '<Modelmanager function: %s >' % self.name

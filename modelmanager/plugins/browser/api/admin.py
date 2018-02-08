@@ -1,5 +1,4 @@
 import os.path as osp
-import inspect
 
 from django.contrib import admin
 from django.apps import apps
@@ -8,7 +7,6 @@ from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 
 from . import models
-from modelmanager.api import Function
 
 
 class ArgumentInlineAdmin(admin.TabularInline):
@@ -37,13 +35,17 @@ class FunctionAdmin(admin.ModelAdmin):
         from django.conf import settings
         func = settings.PROJECT.settings.functions
         for fname, f in func.items():
-            fi = Function(f)
-            fentry = models.Function.objects.filter(name=fi.name).last()
+            fentry = models.Function.objects.filter(name=f.name).last()
             if fentry is None:
-                fentry = models.Function(name=fname, kwargs=fi.kwargs,
-                                         doc=fi.doc)
+                fentry = models.Function(name=fname, kwargs=f.kwargs,
+                                         doc=f.doc)
                 fentry.save()
-            for aname, default in fi.arguments:
+            for aname in f.positional_arguments:
+                aentry = models.Argument.objects.filter(name=aname, function=fentry).last()
+                if aentry is None:
+                    aentry = models.Argument(name=aname, function=fentry)
+                    aentry.save()
+            for aname, default in zip(f.optional_arguments, f.defaults):
                 aentry = models.Argument.objects.filter(name=aname, function=fentry).last()
                 if aentry is None:
                     atype = models.TYPES[type(default)] if default else 'str'
