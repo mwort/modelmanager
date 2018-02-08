@@ -27,7 +27,7 @@ and documentation.
 """
 
 from django.db import models
-from modelmanager.plugins.browser import models as mm
+from modelmanager.plugins.browser.database import models as mm
 
 
 class Run(mm.Run):

@@ -20,15 +20,6 @@ except ImportError:
 from django.apps import apps as djapps
 
 
-class BrowserConfig(django.apps.AppConfig):
-    """
-    This is the app configuration of the modelmanager.plugins.browser app.
-    """
-    name = 'modelmanager.plugins.browser'
-    verbose_name = 'Modelmanager'
-    label = 'modelmanager'
-
-
 class Browser:
 
     def __init__(self, project):
@@ -85,8 +76,7 @@ class Browser:
         Get all available Django models from the plugin and the project.
         """
         with self.settings:
-            models = list(djapps.get_app_config('modelmanager').get_models())
-            models += list(djapps.get_app_config('browser').get_models())
+            models = list(djapps.get_app_config('browser').get_models())
         models = {m.__name__.lower(): m for m in models}
         return models
 
