@@ -84,7 +84,7 @@ class Tables(BrowserProjectTestCase):
         self.assertEqual(run.notes, run_read[0]['notes'])
 
 
-class Admin(BrowserProjectTestCase):
+class DatabaseAdmin(BrowserProjectTestCase):
     urls = ['/browser/',
             '/browser/run/',
             '/browser/run/1/change/',
@@ -102,6 +102,18 @@ class Admin(BrowserProjectTestCase):
         self.assertEqual(response.status_code, 302)  # redirected on success
         resfile = self.browser.models['resultfile'].objects.last()
         self.assertEqual(resfile.file.read(), file(__file__).read())
+
+
+class ApiAdmin(BrowserProjectTestCase):
+    urls = ['/api/',
+            '/api/function/',
+            '/api/setting/',
+            '/api/function/1/change/']
+
+    def test_urls(self):
+        for u in self.urls:
+            print('Checking %s' % u)
+            self.assertEqual(self.client.get(u).status_code, 200)
 
 
 class Files(BrowserProjectTestCase):
