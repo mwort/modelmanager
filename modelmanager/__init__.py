@@ -1,3 +1,3 @@
 from modelmanager.project import Project
 
-__version__ = 'v0.1'
+__version__ = 'v0.2'

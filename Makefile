@@ -17,15 +17,13 @@ clean:
 	find modelmanager -name \*.pyc -delete
 
 version:
-	@git diff --name-only | if grep -q CHANGELOG.md; then \
 	@prev=`python -c 'import modelmanager; print(modelmanager.__version__)'` ;\
 	echo Old version: $$prev ;\
-	read -p "New version number: " new; \
+	read -p "New version number (CHANGELOG.md updated? <ctrl-c> if not): " new; \
 	for f in `grep -rlI $$prev modelmanager README.md docs`; do \
 		sed -i.backup "s/$$prev/$$new/g" $$f ; rm -r $$f.backup ; done ; \
 	git commit -a -m "Bumped version $$prev > $$new ." ; \
-	git tag $$new ; \
-	else echo "You need to add an entry in CHANGELOG.md" ; fi
+	git tag $$new
 
 release:
 	# not working yet
