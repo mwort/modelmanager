@@ -59,7 +59,10 @@ def file_preview_field(field):
 def make_default_model_admin(model):
     meta = model._meta
     fields = meta.fields
-    field_names = [f.name for f in fields]
+    if hasattr(model, 'show_columns'):
+        field_names = model.show_columns
+    else:
+        field_names = [f.name for f in fields]
 
     # fields for special fields
     for f in fields:

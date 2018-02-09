@@ -27,20 +27,22 @@ and documentation.
 """
 
 from django.db import models
-from modelmanager.plugins.browser.database import models as mm
+from modelmanager.plugins.browser.database import models as mmmodels
 
 
-class Run(mm.Run):
+class Run(mmmodels.Run):
+    # columns shown in browser table, can also be method names!!!
+    show_columns = ['id', 'time', 'tags', 'notes']
     pass
 
 
-class Parameter(mm.TaggedValue):
+class Parameter(mmmodels.TaggedValue):
     pass
 
 
-class ResultIndicator(mm.TaggedValue):
+class ResultIndicator(mmmodels.TaggedValue):
     pass
 
 
-class ResultFile(mm.File):
+class ResultFile(mmmodels.File):
     pass
