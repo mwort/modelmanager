@@ -16,6 +16,19 @@ clean:
 	rm -rf build/ dist/ *.egg-info
 	find modelmanager -name \*.pyc -delete
 
+version:
+	@prev=`python -c 'import modelmanager; print(modelmanager.__version__)'` ;\
+	echo Old version: $$prev ;\
+	read -p "New version number: " new; \
+	for f in `grep -rlI $$prev modelmanager README.md docs`; do \
+		sed -i.backup "s/$$prev/$$new/g" $$f ; rm -r $$f.backup ; done ; \
+	git commit -a -m "Bumped version $$prev > $$new ." ; \
+	git tag $$new
+
+release:
+	# not working yet
+	python setup.py sdist
+	git push --tags
 
 # working dir should be clean (git)
 update_docs:
