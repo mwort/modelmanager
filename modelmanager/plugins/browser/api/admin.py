@@ -24,7 +24,7 @@ def update_functions():
             print('More than one function registered for %s.%s' % (f.name, pi))
         fentry = fentry.last()
         if fentry is None:
-            fo = models.Function(name=f.name, kwargs=f.kwargs,
+            fo = models.Function(name=f.name, kwargs=(f.kwargs is not None),
                                  doc=f.doc, plugin=pi)
             fo.save()
             # add arguments
@@ -43,12 +43,16 @@ def function_signiture(obj):
     return ', '.join(args)
 
 
+def plugin(obj):
+    return mark_safe('<a href="?plugin={0}">{0}</a>'.format(obj.plugin))
+
+
 class FunctionAdmin(admin.ModelAdmin):
     ordering = ['plugin', 'name']
-    list_display = ['plugin', 'name', function_signiture, 'doc']
+    list_display = [plugin, 'name', function_signiture, 'doc']
     list_display_links = ['name']
-    readonly_fields = ['name', 'kwargs', 'doc', 'plugin']
-    inlines = []
+    readonly_fields = ['name', 'plugin', 'doc', 'kwargs']
+    inlines = []  # defined as needed in self.get_form
     search_fields = ['plugin', 'name']
 
     def get_form(self, request, obj=None, **kwargs):

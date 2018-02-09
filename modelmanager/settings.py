@@ -209,8 +209,8 @@ class Function(object):
         self.doc = (function.__doc__ or '')
         self.__doc__ = self.doc
         self.name = function.__name__
-        self.kwargs = (fspec.keywords is not None)
-        self.varargs = (fspec.varargs is not None)
+        self.kwargs = fspec.keywords
+        self.varargs = fspec.varargs
         self.function = function
         self.code = "".join(inspect.getsourcelines(function)[0])
         return
