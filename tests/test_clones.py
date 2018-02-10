@@ -5,6 +5,7 @@ import os.path as osp
 import shutil
 import cProfile, pstats
 
+from modelmanager.project import ProjectDoesNotExist
 
 from test_project import create_project
 
@@ -56,7 +57,7 @@ class Clones(unittest.TestCase):
         self.project.clones.create_clone('testclone', verbose=self.verbose)
         clone = self.project.clones['testclone']
         self.assertTrue(osp.exists(clone.projectdir))
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ProjectDoesNotExist):
             self.project.clones['someclone']
 
     def test_clone_of_clone(self):

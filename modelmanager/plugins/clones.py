@@ -8,6 +8,7 @@ import shutil
 from glob import glob
 
 from modelmanager import Project
+from modelmanager.project import ProjectDoesNotExist
 
 
 class Clones:
@@ -33,8 +34,8 @@ class Clones:
     def _get_path_by_name(self, name):
         path = osp.join(self.project.clonesdir, name)
         if not osp.exists(path):
-            raise KeyError('Clone does not exist in %s.'
-                           % self.project.clonesdir)
+            raise ProjectDoesNotExist('Clone does not exist in %s.'
+                                      % self.project.clonesdir)
         return path
 
     def names(self):
