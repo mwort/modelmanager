@@ -1,4 +1,6 @@
 from django.db import models
+from django.conf import settings
+
 
 value_help = ("Valid python code, i.e. strings in 'str'."
               "The variable 'project' contains the project.")
@@ -19,6 +21,10 @@ class Function(models.Model):
     def __unicode__(self):
         plugin = self.plugin if self.plugin else 'project'
         return u'%s.%s' % (plugin, self.name)
+
+    def is_configured(self):
+        args = self.argument_set.all()
+        return all([bool(a.value) for a in args])
 
 
 class Argument(models.Model):

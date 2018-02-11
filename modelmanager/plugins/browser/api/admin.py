@@ -47,9 +47,18 @@ def plugin(obj):
     return mark_safe('<a href="?plugin={0}">{0}</a>'.format(obj.plugin))
 
 
+def result(obj):
+    if obj.is_configured():
+        inpt = '<input type="button" name="%s" value="Run"></input>'
+    else:
+        inpt = ('<a href="%s/change/"><input type="button" value="Configure">'
+                '</input></a>')
+    return mark_safe(inpt % obj.id)
+
+
 class FunctionAdmin(admin.ModelAdmin):
     ordering = ['plugin', 'name']
-    list_display = [plugin, 'name', function_signiture, 'doc']
+    list_display = [plugin, 'name', function_signiture, result]
     list_display_links = ['name']
     readonly_fields = ['name', 'plugin', 'doc', 'kwargs']
     inlines = []  # defined as needed in self.get_form
