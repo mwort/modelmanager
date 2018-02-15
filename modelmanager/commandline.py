@@ -1,31 +1,23 @@
 """Module for everything to do with the commandline interface."""
 import argparse
 
-import modelmanager.project
-from .settings import Function
+
+DESCRIPTION = "Your modelmanager command line interface."
 
 
-def execute_from_commandline():
+def execute_from_commandline(functions={}, plugins={},
+                             description=DESCRIPTION):
     """Comandline interface.
 
     Build an argsparse commandline interface by trying to load a project in
     the current directory and accessing the commandline_functions settings. If
     that fails, just show init command.
-    """
-    # non project methods must not have positional arguments
-    functions = {'setup': Function(modelmanager.project.setup)}
-    plugins = {}
-    try:
-        project = modelmanager.project.Project()
-        functions.update(project.settings.functions)
-        plugins.update(project.settings.plugins)
-    except modelmanager.project.ProjectDoesNotExist:
-        pass
 
-    cli_description = "Your modelmanager command line interface."
+    Non-project functions must not have positional arguments!
+    """
 
     # create the top-level parser
-    mainparser = argparse.ArgumentParser(description=cli_description)
+    mainparser = argparse.ArgumentParser(description=description)
     # add functions
     subparser = add_subparser_functions(mainparser, functions, dest='function',
                                         help='project function')
