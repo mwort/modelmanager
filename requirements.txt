@@ -1,0 +1,5 @@
+# modelmanager plugin dependencies (uncomment if needed)
+# browser
+#django
+# templates
+#parse
