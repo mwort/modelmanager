@@ -103,7 +103,8 @@ class SettingsManager(object):
                 self.classes[name] = obj
 
             else:
-                self.variables[name] = obj
+                # variable, append projectdir
+                self.variables[name] = self._filter_abs_path(obj)
         # attach to project
         #  attributes
         for k, v in self.variables.items():
@@ -134,6 +135,17 @@ class SettingsManager(object):
             traceback.print_exc()
             obj = None
         return obj
+
+    def _filter_abs_path(self, variable):
+        """
+        Check if variable is a string and an existing path relative path from
+        the projectdir. If so, make it absolute.
+        """
+        if type(variable) == str:
+            path = osp.join(self._project.projectdir, variable)
+            if osp.exists(path):
+                variable = path
+        return variable
 
     def __setitem__(self, key, value):
         """

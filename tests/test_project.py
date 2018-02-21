@@ -13,6 +13,7 @@ import os
 from inspect import cleandoc as _cleandoc
 
 test_variable = 123
+test_relpath = 'mm/settings.py'
 
 def test_function(project, d=1):
     dd = d + 1
@@ -84,7 +85,7 @@ class Settings(ProjectTestCase):
     def test_function(self):
         self.assertEqual(self.project.test_function(), 2)
 
-    def test_class(self):
+    def test_plugin(self):
         self.assertEqual(self.project.testplugin.test_plugin_variable, 456)
         self.assertEqual(self.project.testplugin.test_project_variable, 123)
 
@@ -92,6 +93,11 @@ class Settings(ProjectTestCase):
         self.project.settings.load(test_variable=321)
         self.assertEqual(self.project.test_variable, 321)
         self.assertEqual(self.project.testplugin.test_project_variable, 321)
+
+    def test_abspath(self):
+        self.assertTrue(os.path.exists(self.project.test_relpath))
+        sw = self.project.test_relpath.startswith(self.project.projectdir)
+        self.assertTrue(sw)
 
 
 class CommandlineInterface(ProjectTestCase):
