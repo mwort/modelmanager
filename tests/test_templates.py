@@ -31,10 +31,11 @@ class TestTemplates(test_project.ProjectTestCase):
         return
 
     def test_get_template(self):
-        for i in ['param', 'config']:
+        for i in ['param', 'config', 'input/*config*']:
             tmplt = self.templates.get_template(i)
             self.assertIn(os.path.relpath(tmplt.filepath, self.projectdir),
                           TEST_TEMPLATES)
+        self.assertEqual(len(self.templates.get_templates('input/*')), 2)
 
     def test_read_values(self):
         self.assertEqual(self.templates('n'), 1)

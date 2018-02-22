@@ -30,6 +30,7 @@ def get_paths_pattern(pattern, startdir):
     """
     matches = []
     for root, dirnames, filenames in os.walk(startdir):
-        matches += [os.path.relpath(os.path.join(root, fn), startdir)
-                    for fn in fnmatch.filter(filenames, pattern)]
+        fpaths = [os.path.relpath(os.path.join(root, fn), startdir)
+                  for fn in filenames]
+        matches += fnmatch.filter(fpaths, pattern)
     return matches
