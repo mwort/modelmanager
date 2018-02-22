@@ -33,7 +33,8 @@ class Templates(object):
     Compatible template placeholder field types:
     {name}   string (w/o spaces)
     {name:d} int/digits
-    {name:g} float/general
+    {name:f} float
+    {name:g} general numbers, float or int
     """
 
     def __init__(self, project):
@@ -153,13 +154,19 @@ class Template(object):
         Read the values of template into a dictionary.
         """
         # parse with cleaned whitespace
-        result = parse.parse(' '.join(self.template.split()),
-                             ' '.join(self.file.split()))
+        tw, fw = self.template.split(), self.file.split()
+        result = parse.parse(' '.join(tw), ' '.join(fw))
+        # unsucessful parsing
         if result is None:
-            raise ValueError('No values parsed from template. All non-' +
-                             'whitespace strings in %s ' % self.templatepath +
-                             'must match with those in the template %s'
-                             % self.filepath)
+            nw = min(len(tw), len(fw))
+            worddiff = [tw[i] + ': ' + fw[i] for i in range(nw)
+                        if (tw[i] != fw[i] and not parse.parse(tw[i], fw[i]))]
+            ermsg = ('Encountered problem while parsing:\n' +
+                     self.templatepath + '\nThese words/fields are different '
+                     'or cant be parsed:\n' + '\n'.join(worddiff) + '\nAll '
+                     'non-whitespace strings and field types must stricly '
+                     'match with those in the template.')
+            raise ValueError(ermsg)
         # return dict subset
         if len(templatefields) > 0:
             res = {}
