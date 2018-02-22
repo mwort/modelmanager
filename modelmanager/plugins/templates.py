@@ -79,27 +79,28 @@ class Templates(object):
     def __call__(self, *getvalues, **setvalues):
         """
         Global value getter and setter.
-        Returns as many values as were passed into getvalues, otherwise none.
+        Returns value if one name was passed into getvalues, if more returns
+        a dictionary, and if only setvalues returns none.
         """
         assert len(getvalues) > 0 or len(setvalues) > 0, ("No values to get "
                                                           "or set.")
         gotvalues = {}
         setvals = setvalues.copy()
         for t in self.get_templates():
-            fields = t.fields
+            values = t.read_values()
             for gv in getvalues:
-                if gv in fields:
-                    gotvalues[gv] = t.read_values()[gv]
-            for sv in setvalues:
-                if sv in fields:
-                    t.write_values(**{sv: setvals.pop(sv)})
+                if gv in values:
+                    gotvalues[gv] = values[gv]
+            valset = {k: setvals.pop(k) for k in setvalues if k in values}
+            if valset:
+                t.write_values(**valset)
         # ensure everything asked for was completed
         if len(setvalues) > 0 and len(setvals) > 0:
-            raise IndexError('Could not set all values: %s' % setvals)
+            raise KeyError('Could not set all values: %s' % setvals)
         if len(getvalues) > 0:
             result = [v for v in getvalues if v not in gotvalues]
             if len(result) > 0:
-                raise IndexError('Could not find values for %s' % result)
+                raise KeyError('Could not find values for %s' % result)
             ret = tuple([gotvalues.pop(v) for v in getvalues])
             return ret if len(ret) > 1 else ret[0]
         return
@@ -112,6 +113,7 @@ class Template(object):
     """
     A representation of a template and file pair with associated functionality.
     """
+
     def __init__(self, templatepath, filepath):
         assert osp.exists(templatepath), ("Template file does not exist: %s"
                                           % templatepath)
@@ -119,6 +121,8 @@ class Template(object):
         assert osp.exists(filepath), ("Templated file does not exist: %s"
                                       % filepath)
         self.filepath = filepath
+
+        self.field_not_found_error_msg = '%s not found in ' + self.templatepath
         return
 
     @property
@@ -144,7 +148,7 @@ class Template(object):
     def __repr__(self):
         return '<Template %s / %s>' % (self.templatepath, self.filepath)
 
-    def read_values(self):
+    def read_values(self, *templatefields):
         """
         Read the values of template into a dictionary.
         """
@@ -156,8 +160,20 @@ class Template(object):
                              'whitespace strings in %s ' % self.templatepath +
                              'must match with those in the template %s'
                              % self.filepath)
+        # return dict subset
+        if len(templatefields) > 0:
+            res = {}
+            for f in templatefields:
+                if f not in result.named:
+                    raise KeyError(self.field_not_found_error_msg % f)
+                res[f] = result.named[f]
+            # return value only
+            if len(res) == 1:
+                return res[res.keys()[0]]
+        # return all
         else:
-            return result.named
+            res = result.named
+        return res
 
     def write_values(self, **templatevalues):
         """
@@ -165,7 +181,10 @@ class Template(object):
         """
         assert len(templatevalues) > 0, "No values to write."
         values = self.read_values()
-        values.update(templatevalues)
+        for k, v in templatevalues.items():
+            if k not in values:
+                raise KeyError(self.field_not_found_error_msg % k)
+            values[k] = v
         with file(self.filepath, 'w') as f:
             f.write(self.template.format(**values))
         return

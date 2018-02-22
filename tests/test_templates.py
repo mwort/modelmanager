@@ -40,7 +40,14 @@ class TestTemplates(test_project.ProjectTestCase):
         self.assertEqual(self.templates('n'), 1)
         self.assertEqual(self.templates('d'), 1.1)
         self.assertEqual(self.templates('test'), "XYZ")
-        self.assertRaises(IndexError, self.templates, "unknown")
+        self.assertRaises(KeyError, self.templates, "unknown")
+        config = self.templates['config']
+        # return value only
+        self.assertEqual(config.read_values('test'), 'XYZ')
+        # return dict
+        d = config.read_values('test', 'time')
+        self.assertEqual(d['time'], '2000-01-01')
+        self.assertRaises(KeyError, config.read_values, 'unknown')
 
     def test_write_values(self):
         self.templates(n=100)
@@ -49,7 +56,9 @@ class TestTemplates(test_project.ProjectTestCase):
         self.assertEqual(self.templates('d'), 1.111)
         self.templates(test='Somelongstr')
         self.assertEqual(self.templates('test'), "Somelongstr")
-        self.assertRaises(IndexError, self.templates, unknown=1)
+        self.assertRaises(KeyError, self.templates, unknown=1)
+        param = self.templates['param']
+        self.assertRaises(KeyError, param.write_values, unknown=1)
 
 
 if __name__ == '__main__':
