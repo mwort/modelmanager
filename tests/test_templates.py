@@ -11,8 +11,8 @@ from modelmanager.plugins.templates import Templates
 
 TEST_TEMPLATES = {'input/test_param.txt': ("Test parameters\n{n:d} {d:f}",
                                            "Test parameters\n 1     1.1 "),
-                  'input/test_config.pr': ("parameters {test}\n{time}",
-                                           "parameters XYZ \n2000-01-01")}
+                  'input/test_config.pr': ("parameters {test}\n{time}\n{n:d}",
+                                           "parameters XYZ \n2000-01-01\n1")}
 
 
 class TestTemplates(test_project.ProjectTestCase):
@@ -60,6 +60,14 @@ class TestTemplates(test_project.ProjectTestCase):
         self.assertRaises(KeyError, self.templates, unknown=1)
         param = self.templates['param']
         self.assertRaises(KeyError, param.write_values, unknown=1)
+
+    def test_subset(self):
+        self.assertEqual(self.templates('n', templates='config'), 1)
+        self.templates(n=2, templates=['config'])
+        self.assertEqual(self.templates('n', templates='param'), 1)
+        self.assertEqual(self.templates('n', templates='config'), 2)
+        # value from last listed template is returned
+        self.assertEqual(self.templates("n", templates=['param', 'config']), 2)
 
 
 if __name__ == '__main__':

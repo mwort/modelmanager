@@ -80,25 +80,41 @@ class Templates(object):
     def __call__(self, *getvalues, **setvalues):
         """
         Global value getter and setter.
-        Returns value if one name was passed into getvalues, if more returns
-        a dictionary, and if only setvalues returns none.
+
+        getvalues: Names of template values to get, returns value for one,
+                   tuple for many
+        setvalues: keyword arguments to set in the template, if given, None is
+                   returned.
+        Special keyword:
+        templates: Template part or pattern str / list of str to subset get/set
+                   otherwise use all available templates
         """
-        assert len(getvalues) > 0 or len(setvalues) > 0, ("No values to get "
-                                                          "or set.")
         gotvalues = {}
-        setvals = setvalues.copy()
-        for t in self.get_templates():
+        setvals = {}
+        # get tempates
+        if 'templates' in setvalues:
+            tmpltarg = setvalues.pop('templates')
+            tmpltarg = [tmpltarg] if type(tmpltarg) is str else tmpltarg
+            templates = [self.get_template(pp) for pp in tmpltarg]
+        else:
+            templates = self.get_templates()
+        assert len(getvalues) > 0 or len(setvalues) > 0, (
+               "No values to get or set.")
+        # get and set
+        for t in templates:
             values = t.read_values()
             for gv in getvalues:
                 if gv in values:
                     gotvalues[gv] = values[gv]
-            valset = {k: setvals.pop(k) for k in setvalues if k in values}
+            valset = {k: v for k, v in setvalues.items() if k in values}
+            setvals.update(valset)
             if valset:
                 t.write_values(**valset)
         # ensure everything asked for was completed
-        if len(setvalues) > 0 and len(setvals) > 0:
-            raise KeyError('Could not set all values: %s' % setvals)
-        if len(getvalues) > 0:
+        if setvalues and not setvals == setvalues:
+            notset = {k: v for k, v in setvalues.items() if not (k in setvals)}
+            raise KeyError('Could not set all values: %s' % notset)
+        if getvalues:
             result = [v for v in getvalues if v not in gotvalues]
             if len(result) > 0:
                 raise KeyError('Could not find values for %s' % result)
