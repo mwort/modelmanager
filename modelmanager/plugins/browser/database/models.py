@@ -2,6 +2,7 @@
 This is a collection of meta models to be subclassed in the projects
 browser/models.py file.
 """
+import os.path as osp
 
 from django.db import models
 from django.core.files import File as djFile
@@ -35,11 +36,15 @@ class TaggedValue(RunTagged):
                                 decimal_places=DECIMAL_PLACES)
 
 
+def run_file_path(instance, filename):
+    return osp.join('result', str(instance.run.pk), filename)
+
+
 class File(RunTagged):
     class Meta:
         abstract = True
 
-    file = models.FileField(upload_to="results")
+    file = models.FileField(upload_to=run_file_path)
 
     def __init__(self, *args, **kwargs):
         # handle different file objects on construction
