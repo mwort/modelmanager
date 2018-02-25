@@ -161,33 +161,12 @@ class SettingsManager(object):
         """
         return self._project.__dict__[key]
 
-    def check_paths(self, dictionary=None, warn=True):
-        '''Checks all settings for possible paths and return that are existing
-        as a dictionary.'''
-        dictionary = dictionary or self.variables
-        # needs to have a slash \ or /
-        slashed = {k: v
-                   for k, v in dictionary.items()
-                   if osp.sep in v}
-        existing = {k: v
-                    for k, v in slashed.items()
-                    if osp.exists(v)}
-        notexisting = {k: v
-                       for k, v in slashed.items()
-                       if not osp.exists(v)}
-
-        if warn and len(notexisting) > 1:
-            print('These variables look like paths but dont exist:')
-            for k, v in notexisting.items():
-                print('%s: %s' % (k, v))
-        return existing
-
     def serialise(self):
         '''Default serialisation happens here via json.dumps'''
         return json.dumps(self.variables, indent=1, sort_keys=True)
 
     def __unicode__(self):
-        return self.__str__()
+        return unicode(self.__str__())
 
     def __repr__(self):
         ppath = osp.abs(self.projectdir)
