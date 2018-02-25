@@ -11,7 +11,7 @@ class Run(models.Model):
     class Meta:
         abstract = True
     time = models.DateTimeField('Time', auto_now_add=True)
-    tags = models.CharField(max_length=1024, blank=True)
+    tags = models.CharField(max_length=1024, blank=True, null=True)
     notes = models.TextField('Notes', blank=True)
 
     def __unicode__(self):
@@ -22,7 +22,7 @@ class RunTagged(models.Model):
     class Meta:
         abstract = True
     run = models.ForeignKey('browser.Run', on_delete=models.CASCADE)
-    tags = models.CharField(max_length=1024, blank=True)
+    tags = models.CharField(max_length=1024, blank=True, null=True)
 
 
 class TaggedValue(RunTagged):
