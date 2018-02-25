@@ -52,13 +52,14 @@ class File(RunTagged):
             f = kwargs.pop('file')
             if type(f) == str:
                 f = file(f, 'rb+')
-            if isinstance(f, file):
+            try:
                 f = djFile(f)
-            if isinstance(f, djFile):
-                kwargs['file'] = f
-            else:
-                raise TypeError('file must be a path string, a file or a '
+                f.readable()
+            except (TypeError, AttributeError):
+                raise TypeError('Cant convert %s to a ' % f +
                                 'django.core.files.File instance.')
+            kwargs['file'] = f
+
         super(File, self).__init__(*args, **kwargs)
 
     def delete(self):
