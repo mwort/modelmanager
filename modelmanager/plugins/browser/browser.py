@@ -43,7 +43,8 @@ class Browser:
         try:
             utils.copy_resources(osp.join(osp.dirname(__file__), 'resources'),
                                  self.resourcedir)
-        except OSError:
+        except OSError as e:
+            print(e)
             em = ('Cant install the browser resources. Do they already '
                   'exist in %s?' % self.resourcedir)
             raise OSError(em)
@@ -106,14 +107,17 @@ class Browser:
 class BrowserSettings:
     # switch to track django setup for with block
     setup_on_with = False
+    dbname = 'db.sqlite3'
+    filesdirname = 'files/'
+    tmpfilesdirname = 'tmp/'
 
     def __init__(self, browser):
         self.project = browser.project
         self.browser = browser
         self.resourcedir = self.project.resourcedir
-        self.dbpath = osp.join(self.browser.resourcedir, 'db.sqlite3')
-        self.filesdir = osp.join(self.browser.resourcedir, 'files/')
-        self.tmpfilesdir = osp.join(self.filesdir, 'tmp/')
+        self.dbpath = osp.join(self.browser.resourcedir, self.dbname)
+        self.filesdir = osp.join(self.browser.resourcedir, self.filesdirname)
+        self.tmpfilesdir = osp.join(self.filesdir, self.tmpfilesdirname)
         if not osp.exists(self.tmpfilesdir):
             os.mkdir(self.tmpfilesdir)
         # Project-specific Django settings
