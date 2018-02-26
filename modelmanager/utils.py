@@ -1,7 +1,9 @@
 """All handy, general utility functionality used throughout the package."""
 
 import os
+import os.path as osp
 import fnmatch
+import shutil
 
 
 def load_module_path(name, path):
@@ -34,3 +36,25 @@ def get_paths_pattern(pattern, startdir):
                   for fn in filenames]
         matches += fnmatch.filter(fpaths, pattern)
     return matches
+
+
+def copy_resources(sourcedir, destinationdir, overwrite=False):
+    """
+    Copy/sync resource file tree from sourcedir to destinationdir.
+
+    overwrite: Overwrite existing files.
+    """
+    if not osp.exists(destinationdir):
+        os.mkdir(destinationdir)
+
+    for path, dirs, files in os.walk(sourcedir, topdown=True):
+        relpath = os.path.relpath(path, sourcedir)
+        for f in files:
+            dst = osp.join(destinationdir, relpath, f)
+            if overwrite or not osp.exists(dst):
+                shutil.copy(osp.join(path, f), dst)
+        for d in dirs:
+            dst = osp.join(destinationdir, relpath, d)
+            if not osp.exists(dst):
+                os.mkdir(dst)
+    return

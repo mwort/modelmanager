@@ -19,6 +19,8 @@ except ImportError:
 
 from django.apps import apps as djapps
 
+from modelmanager import utils
+
 
 class Browser:
 
@@ -26,8 +28,7 @@ class Browser:
         self.project = project
         self.resourcedir = osp.join(project.resourcedir, 'browser')
 
-        if not osp.exists(self.resourcedir):
-            self._install()
+        self._install()
 
         # permanently setup django (will cause error with multiple prjects)
         self.settings = BrowserSettings(self)
@@ -40,8 +41,8 @@ class Browser:
         Install the browser resources in project.resourcedir.
         """
         try:
-            shutil.copytree(osp.join(osp.dirname(__file__), 'resources'),
-                            self.resourcedir)
+            utils.copy_resources(osp.join(osp.dirname(__file__), 'resources'),
+                                 self.resourcedir)
         except OSError:
             em = ('Cant install the browser resources. Do they already '
                   'exist in %s?' % self.resourcedir)
