@@ -99,7 +99,7 @@ def copy_resources(sourcedir, destinationdir, overwrite=False,
                 printverbose('Linking %s to %s' % (dest, rsrc))
                 os.symlink(rsrc, dest)
             # copy file
-            else:
+            elif not osp.exists(dest) or overwrite:
                 printverbose('cp %s to %s' % (src, dest))
                 shutil.copy(src, dest)
     return
