@@ -10,13 +10,13 @@ from modelmanager.project import ProjectDoesNotExist
 from test_project import create_project
 
 TEST_SETTINGS = """
-from modelmanager.plugins import Clones
+from modelmanager.plugins import Clone
 """
 
 
 class Clones(unittest.TestCase):
 
-    projectdir = 'clonestestproject'
+    projectdir = 'clonetestproject'
     verbose = False
 
     def setUp(self):
@@ -43,8 +43,7 @@ class Clones(unittest.TestCase):
         return
 
     def test_simple_cloning(self):
-        clone = self.project.clones.create_clone('testclone',
-                                                 verbose=self.verbose)
+        clone = self.project.clone('testclone', verbose=self.verbose)
         self.assertTrue(osp.isdir(self.cd('testclone')))
         self.assertTrue(osp.islink(self.cd('testclone/mm')))
         mmln = os.readlink(self.cd('testclone/mm'))
@@ -54,39 +53,38 @@ class Clones(unittest.TestCase):
         self.assertTrue(osp.exists(self.cd('testclone/input/input.txt')))
 
     def test_retrieval(self):
-        self.project.clones.create_clone('testclone', verbose=self.verbose)
-        clone = self.project.clones['testclone']
+        self.project.clone('testclone', verbose=self.verbose)
+        clone = self.project.clone['testclone']
         self.assertTrue(osp.exists(clone.projectdir))
         with self.assertRaises(ProjectDoesNotExist):
-            self.project.clones['someclone']
+            self.project.clone['someclone']
 
     def test_clone_of_clone(self):
-        clone = self.project.clones.create_clone('testclone',
-                                                 verbose=self.verbose)
-        clone.clones.create_clone('testclone2', verbose=self.verbose)
+        clone = self.project.clone('testclone', verbose=self.verbose)
+        clone.clone('testclone2', verbose=self.verbose)
         self.assertTrue(osp.exists(self.cd('testclone2')))
 
     def test_cloneignore(self):
         self.project.settings(cloneignore=['output/*'])
-        self.project.clones.create_clone('testclone', verbose=self.verbose)
+        self.project.clone('testclone', verbose=self.verbose)
         self.assertFalse(osp.exists(self.cd('testclone/output/out.txt')))
         self.assertTrue(osp.exists(self.cd('testclone/output')))
 
     def test_clonelinks(self):
         lns = ['input/params.txt', 'output']
         self.project.settings(clonelinks=lns)
-        self.project.clones.create_clone('testclone', verbose=self.verbose)
+        self.project.clone('testclone', verbose=self.verbose)
         for l in lns:
             self.assertTrue(osp.islink(self.cd('testclone', l)))
 
     def test_unlinked(self):
-        clone = self.project.clones.create_clone('testclone', linked=False,
-                                                 verbose=self.verbose)
+        clone = self.project.clone('testclone', linked=False,
+                                   verbose=self.verbose)
         self.assertFalse(osp.islink(self.cd('testclone/mm')))
         self.assertEqual(file(self.pd('mm/settings.py')).read(),
                          file(self.cd('testclone/mm/settings.py')).read())
         # clone of clone
-        clone.clones.create_clone('testclone', verbose=self.verbose)
+        clone.clone('testclone', verbose=self.verbose)
         self.assertTrue(osp.exists(self.cd('testclone/mm/clones/testclone')))
 
 

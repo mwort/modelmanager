@@ -1,5 +1,5 @@
 PY = python
-PLUGINS = browser browser_multiproject templates clones
+PLUGINS = browser browser_multiproject templates clone
 
 all: default plugins
 

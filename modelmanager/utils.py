@@ -38,23 +38,68 @@ def get_paths_pattern(pattern, startdir):
     return matches
 
 
-def copy_resources(sourcedir, destinationdir, overwrite=False):
+def copy_resources(sourcedir, destinationdir, overwrite=False,
+                   ignorepatterns=[], linkpatterns=[], verbose=False):
     """
     Copy/sync resource file tree from sourcedir to destinationdir.
 
     overwrite: Overwrite existing files.
     """
+    def printverbose(args):
+        if verbose:
+            print(args)
+        return
+    pj = osp.join
     if not osp.exists(destinationdir):
+        printverbose('mkdir %s' % destinationdir)
         os.mkdir(destinationdir)
 
-    for path, dirs, files in os.walk(sourcedir, topdown=True):
-        relpath = os.path.relpath(path, sourcedir)
-        for f in files:
-            dst = osp.join(destinationdir, relpath, f)
-            if overwrite or not osp.exists(dst):
-                shutil.copy(osp.join(path, f), dst)
+    walker = os.walk(sourcedir, topdown=True)
+    for path, dirs, files in walker:
+        rpath = osp.relpath(path, sourcedir).replace('.', '')
+        # dirs
+        subsetdirs = []
         for d in dirs:
-            dst = osp.join(destinationdir, relpath, d)
-            if not osp.exists(dst):
-                os.mkdir(dst)
+            rdir = pj(rpath, d)
+            dest = pj(destinationdir, rpath, d)
+            if any(fnmatch.fnmatch(rdir, p) for p in ignorepatterns):
+                printverbose('Ignoring %s' % rdir)
+            # dir to symlink with relative path
+            elif any(fnmatch.fnmatch(rdir, p) for p in linkpatterns):
+                rsrc = osp.relpath(pj(path, d), osp.dirname(dest))
+                printverbose('Linking %s to %s' % (dest, rsrc))
+                os.symlink(rsrc, dest)
+            # create new dir
+            else:
+                if not osp.exists(dest):
+                    printverbose('mkdir %s' % dest)
+                    os.mkdir(dest)
+                subsetdirs.append(d)
+        # update dirs (change in place will prevent walking into them)
+        dirs[:] = subsetdirs
+        # files
+        for f in files:
+            rfil = osp.join(rpath, f)
+            dest = pj(destinationdir, rpath, f)
+            src = pj(path, f)
+            # ignored files
+            if any(fnmatch.fnmatch(rfil, p) for p in ignorepatterns):
+                printverbose('Ignoring %s' % rfil)
+                continue
+            # file to symlink with relative path
+            elif any(fnmatch.fnmatch(rfil, p) for p in linkpatterns):
+                rsrc = osp.relpath(pj(path, f), osp.dirname(dest))
+                printverbose('Linking %s to %s' % (dest, rsrc))
+                os.symlink(rsrc, dest)
+            # copy/relink existing symlinks
+            elif osp.islink(src):
+                linkto = os.readlink(src)
+                lnabs = osp.abspath(pj(path, linkto))
+                rsrc = osp.relpath(lnabs, osp.dirname(dest))
+                printverbose('Linking %s to %s' % (dest, rsrc))
+                os.symlink(rsrc, dest)
+            # copy file
+            else:
+                printverbose('cp %s to %s' % (src, dest))
+                shutil.copy(src, dest)
     return

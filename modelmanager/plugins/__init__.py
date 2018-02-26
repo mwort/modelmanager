@@ -1,3 +1,3 @@
 from .browser import Browser
 from .templates import Templates
-from .clones import Clones
+from .clones import Clone
