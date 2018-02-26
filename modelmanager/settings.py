@@ -157,9 +157,30 @@ class SettingsManager(object):
 
     def __getitem__(self, key):
         """
-        Make settings available through the project.settings['name'] interface.
+        Get project method and attributes by string or dotted path for plugins.
+
+        key: attribute/method string or dotted path.
+        Returns: attribute/method.
         """
-        return self._project.__dict__[key]
+        mod = self._project
+        for comp in key.split('.'):
+            if not hasattr(mod, comp):
+                raise KeyError('Project does not have attribute %s' % key)
+            mod = getattr(mod, comp)
+        return mod
+
+    def is_valid(self, key):
+        """
+        Check if key is a valid setting incl. dotted path to plugin attributes.
+        """
+        mod = self._project
+        components = key.split('.')
+        for i, comp in enumerate(components):
+            if not hasattr(mod, comp):
+                return False
+            if i < len(components)-1:
+                mod = getattr(mod, comp)
+        return True
 
     def serialise(self):
         '''Default serialisation happens here via json.dumps'''

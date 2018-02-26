@@ -99,6 +99,13 @@ class Settings(ProjectTestCase):
         sw = self.project.test_relpath.startswith(self.project.projectdir)
         self.assertTrue(sw)
 
+    def test_str_retrieval(self):
+        dottedpath = 'testplugin.test_plugin_variable'
+        self.assertTrue(self.project.settings.is_valid('test_variable'))
+        self.assertEqual(self.project.settings['test_variable'], 123)
+        self.assertTrue(self.project.settings.is_valid(dottedpath))
+        self.assertEqual(self.project.settings[dottedpath], 456)
+
 
 class CommandlineInterface(ProjectTestCase):
     def test_function(self):
