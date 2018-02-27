@@ -6,6 +6,7 @@ import os.path as osp
 
 from django.db import models
 from django.core.files import File as djFile
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 
 class Run(models.Model):
@@ -37,7 +38,7 @@ class TaggedValue(RunTagged):
 
 
 def run_file_path(instance, filename):
-    return osp.join('result', str(instance.run.pk), filename)
+    return osp.join('runs', str(instance.run.pk), filename)
 
 
 class File(RunTagged):
@@ -52,8 +53,17 @@ class File(RunTagged):
             f = kwargs.pop('file')
             if type(f) == str:
                 f = file(f, 'rb+')
+            # try convert anything that isnt a file by now into a django File
+            # or a django InMemoryUploadedFile
             try:
-                f = djFile(f)
+                if not isinstance(f, file):
+                    errmsg = ('If file isnt a file instance, a filename needs '
+                              ' to be passed. %r' % f)
+                    assert 'filename' in kwargs, errmsg
+                    f = InMemoryUploadedFile(f, None, kwargs.pop('filename'),
+                                             None, f.len, None)
+                else:
+                    f = djFile(f)
                 f.readable()
             except (TypeError, AttributeError):
                 raise TypeError('Cant convert %s to a ' % f +

@@ -160,8 +160,9 @@ class BrowserSettings:
             django.conf.settings.configure(defaultsettings,
                                            **self.django_settings)
             django.setup()
-        except Exception:
-            raise #Exception('Failed to activate Django :(')
+        except Exception as e:
+            print(e)
+            raise Exception('Failed to activate Django :(')
         return True
 
     def unset(self):
