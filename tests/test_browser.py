@@ -148,12 +148,14 @@ class Files(BrowserProjectTestCase):
                                           file=f, run=self.test_run)
             newpath = resfile.file.path
             self.assertTrue(os.path.exists(newpath))
+            fdir = os.path.join(self.project.browser.settings.filesdir, 'runs')
+            self.assertTrue(newpath.startswith(fdir))
             resfile = self.browser.models['resultfile'].objects.first()
             self.assertEqual(newpath, resfile.file.path)
             resfile.delete()
             self.assertFalse(os.path.exists(newpath))
 
-        with self.assertRaises(TypeError):
+        with self.assertRaises(IOError):
             resfile = self.browser.insert('resultfile',
                                           file=123, run=self.test_run)
 

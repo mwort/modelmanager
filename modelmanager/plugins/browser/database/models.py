@@ -4,11 +4,9 @@ browser/models.py file.
 """
 import os
 import os.path as osp
-import shutil
+from io import BytesIO
 
 from django.db import models
-from django.conf import settings
-from django.core.files import File as djFile
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
 
@@ -41,52 +39,68 @@ class TaggedValue(RunTagged):
 
 
 def upload_to_path(instance, filename):
-    return osp.join(instance.SUBDIR, str(instance.run.pk), filename)
+    return osp.join(instance.dirname, str(instance.run.pk), filename)
 
 
 class File(RunTagged):
+    """
+    An abstract model to save files with a run instance. Unlike the Django file
+    field defaults, it accepts any file or buffer instance and file path to the
+    file argument. Moving/copying happens in memory, so this is not suitable
+    for large files.
+
+    Additional arguments:
+    ---------------------
+    filename: destination file name. Required if a buffer is parsed to file.
+    copy: boolean whether to copy the source file or to move it.
+
+    Class options:
+    --------------
+    copy: default to the copy argument.
+    dirname: name of directory under the browser/files directory the files are
+        saved under before the runID.
+    """
     class Meta:
         abstract = True
-
-    SUBDIR = 'runs'
+    # name of subdirectory the files are stored under: dirname/runid/files
+    dirname = 'runs'
+    # whether to copy or move the original file
+    copy = True
+    # file Django fields
     file = models.FileField(upload_to=upload_to_path)
 
     def __init__(self, *args, **kwargs):
-        # handle different file objects on construction
-        if 'file' in kwargs:
-            kwargs['file'] = self.handle_file(**kwargs)
-            if 'filename' in kwargs:
-                kwargs.pop('filename')
+        f = kwargs.pop('file', None)
+        if f is not None:
+            self.parsed_file = f
+            self.parsed_filename = kwargs.pop('filename', None)
+            self.copy = kwargs.pop('copy', self.copy)
+            kwargs['file'] = self._handle_file()
         super(File, self).__init__(*args, **kwargs)
 
-    def handle_file(self, **kwargs):
+    def _handle_file(self):
         """
-        Converts a filepath, a file object or a buffer object to a safe and
-        valid django.core.files.File using the kwargs of the __init__.
+        Converts a filepath, file object or buffer to a InMemoryUploadedFile.
         """
-        f = kwargs['file']
-        media_root = settings.MEDIA_ROOT
-        if isinstance(f, file) or type(f) is str:
-            oldp = osp.abspath(f if type(f) == str else f.name)
-            if oldp.startswith(media_root):
-                newp = oldp
-            else:
-                di = osp.join(media_root, self.SUBDIR, str(kwargs['run'].pk))
-                newp = osp.join(di, osp.basename(oldp))
-                if not osp.exists(di):
-                    os.makedirs(di)
-                errmsg = "File already exists for this run: " + newp
-                assert not osp.exists(newp), errmsg
-                shutil.copy(oldp, newp)
-            # create django file
-            f = djFile(file(newp, 'rb+'))
+        if type(self.parsed_file) == str:
+            self.parsed_file = file(self.parsed_file, 'rb')
+
+        if isinstance(self.parsed_file, file):
+            self.parsed_file.seek(0)
+            f = BytesIO(self.parsed_file.read())
+            fn = osp.basename(self.parsed_file.name)
+            self.parsed_file.close()
+            if not self.copy:
+                os.remove(self.parsed_file.name)
         else:
-            errmsg = ('If file isnt a file instance, a filename needs '
-                      ' to be passed. %r' % f)
-            assert 'filename' in kwargs, errmsg
-            f = InMemoryUploadedFile(f, None, kwargs.pop('filename'),
-                                     None, f.len, None)
-        return f
+            f = self.parsed_file
+            fn = self.parsed_filename
+        imf = InMemoryUploadedFile(f, None, fn, None, None, None)
+        try:
+            imf.readable()
+        except Exception:
+            raise IOError('File not readable: %s' % self.parsed_file)
+        return imf
 
     def delete(self):
         self.file.delete()
