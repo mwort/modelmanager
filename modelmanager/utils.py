@@ -103,3 +103,26 @@ def copy_resources(sourcedir, destinationdir, overwrite=False,
                 printverbose('cp %s to %s' % (src, dest))
                 shutil.copy(src, dest)
     return
+
+
+def propertyplugin(cls):
+    """
+    Class decorator to create a plugin that is instantiated and returned when
+    the project attribute is used to conveniently combine class + constructor.
+
+    Like all plugins, the propertyplugin __init__ method must only accept one
+    positional argument, i.e. the project.
+
+    Usage:
+    ------
+    @propertyplugin
+    class result:
+        def __init__(self, project):
+            pass
+
+    project = swim.Project()
+    project.result -> result instance
+    """
+    def plugin_instatiator(project):
+        return cls(project)
+    return property(plugin_instatiator)

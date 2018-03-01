@@ -11,6 +11,7 @@ import modelmanager as mm
 TEST_SETTINGS = """
 import os
 from inspect import cleandoc as _cleandoc
+from modelmanager import utils
 
 test_variable = 123
 test_relpath = 'mm/settings.py'
@@ -29,6 +30,15 @@ class TestPlugin:
 
     def test_method(self, testarg):
         return testarg
+
+@property
+def test_property(project):
+    return project.projectdir
+
+@utils.propertyplugin
+class result:
+    def __init__(self, project):
+        pass
 """
 
 
@@ -88,6 +98,10 @@ class Settings(ProjectTestCase):
     def test_plugin(self):
         self.assertEqual(self.project.testplugin.test_plugin_variable, 456)
         self.assertEqual(self.project.testplugin.test_project_variable, 123)
+
+    def test_property(self):
+        self.assertEqual(self.project.test_property, self.project.projectdir)
+        self.assertEqual(str(self.project.result.__class__), 'settings.result')
 
     def test_override(self):
         self.project.settings.load(test_variable=321)

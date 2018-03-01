@@ -28,6 +28,7 @@ class SettingsManager(object):
         self.file = None
         self.variables = {}
         self.functions = {}
+        self.properties = {}
         self.classes = {}
         return
 
@@ -101,7 +102,8 @@ class SettingsManager(object):
                 # will be instatiated later when all variables and
                 # functions are available
                 self.classes[name] = obj
-
+            elif isinstance(obj, property):
+                self.properties[name] = obj
             else:
                 # variable, append projectdir
                 self.variables[name] = self._filter_abs_path(obj)
@@ -114,6 +116,9 @@ class SettingsManager(object):
             setattr(self._project, k, f)
             # store as Function
             self.functions[k] = Function(f)
+        # properties
+        for k, p in self.properties.items():
+            setattr(self._project.__class__, k, p)
         # classes
         self.plugins = {}
         for k, c in self.classes.items():
