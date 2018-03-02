@@ -23,7 +23,7 @@ class Project(object):
     """
 
     def __init__(self, projectdir='.', **settings):
-        self.projectdir = projectdir
+        self.projectdir = osp.abspath(projectdir)
         # initalise settings
         self.settings = SettingsManager(self)
         # load settings with overridden settings
@@ -32,7 +32,7 @@ class Project(object):
 
     def __repr__(self):
         rpd = osp.relpath(self.projectdir, os.getcwd())
-        r = ('<%s instance in %s >' % (self.__class__.__name__, rpd))
+        r = ('<%s instance in: %s >' % (self.__class__.__name__, rpd))
         return r
 
 

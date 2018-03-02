@@ -195,8 +195,7 @@ class SettingsManager(object):
         return unicode(self.__str__())
 
     def __repr__(self):
-        ppath = osp.abs(self.projectdir)
-        rep = '<modelmanager.settings.SettingsManager for %s>' % ppath
+        rep = '<SettingsManager for %s>' % self._project
         return rep
 
 
