@@ -27,13 +27,13 @@ class Browser:
     def __init__(self, project):
         self.project = project
         self.resourcedir = osp.join(project.resourcedir, 'browser')
-
         self._install()
-
         # permanently setup django (will cause error with multiple prjects)
         self.settings = BrowserSettings(self)
         self.settings.setup()
-        self.update_db()
+        # only update the database if it doesnt exist yet
+        if not osp.exists(self.settings.dbpath):
+            self.update_db()
         return
 
     def _install(self):
