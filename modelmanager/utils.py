@@ -4,6 +4,7 @@ import os
 import os.path as osp
 import fnmatch
 import shutil
+import inspect
 
 
 def load_module_path(name, path):
@@ -123,6 +124,13 @@ def propertyplugin(cls):
     project = swim.Project()
     project.result -> result instance
     """
+
     def plugin_instatiator(project):
         return cls(project)
+    plugin_instatiator.isplugin = True
+    # pass on plugin functions to property.fget.plugin_functions
+    if hasattr(cls, 'plugin_functions'):
+        mthds = {n: getattr(cls, n, None) for n in cls.plugin_functions}
+        plugin_instatiator.plugin_functions = {k: v for k, v in mthds.items()
+                                               if inspect.ismethod(v)}
     return property(plugin_instatiator)

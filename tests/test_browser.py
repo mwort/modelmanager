@@ -14,9 +14,19 @@ from test_project import create_project
 
 TEST_SETTINGS = """
 from modelmanager.plugins.browser import Browser
+from modelmanager import utils
 
 def test_function(project, s='hello', **kwargs):
     return ','.join(kwargs.values()) if len(kwargs)>0 else s
+
+@utils.propertyplugin
+class result:
+    plugin_functions = ['plot_test']
+
+    def __init__(self, project):
+        pass
+    def plot_test(self):
+        return 0
 """
 
 TEST_MODELS = """

@@ -30,6 +30,7 @@ class SettingsManager(object):
         self.functions = {}
         self.properties = {}
         self.classes = {}
+        self.plugins = {}
         return
 
     def load(self, **override_settings):
@@ -119,8 +120,13 @@ class SettingsManager(object):
         # properties
         for k, p in self.properties.items():
             setattr(self._project.__class__, k, p)
-        # classes
-        self.plugins = {}
+            # deal with propertyplugins
+            if getattr(p.fget, 'isplugin', False):
+                plnf = getattr(p.fget, 'plugin_functions', {})
+                plnf = {n: Function(v) for n, v in plnf.items()}
+                self.plugins[k] = (v, plnf)
+
+        # classes to plugins
         for k, c in self.classes.items():
             instance = self._instatiate(c)
             name = k.lower()
