@@ -87,11 +87,11 @@ class Tables(BrowserProjectTestCase):
 
     def test_table_read_write(self):
         # with django
-        run_read = self.models['run'].objects.filter(notes__contains='testing')
+        run_read = self.browser.runs.filter(notes__contains='testing')
         self.assertEqual(run_read.last().notes, "testing notes")
         # with internal functions
         run = self.browser.insert('run', notes='tests notes')   # run instance
-        run_read = self.browser.get('run', notes__contains='tests')  # d
+        run_read = self.browser.get('run', notes__contains='tests')  # list
         self.assertEqual(run.notes, run_read[0].notes)
         # with related fields
         run = self.browser.insert('run', notes='has related', tags='crazy',
@@ -99,7 +99,7 @@ class Tables(BrowserProjectTestCase):
                                   resultindicators=[dict(name='x', value=1.6),
                                                     dict(name='n', value=0.1)])
         # read again
-        run_read = self.browser.get('run', tags='crazy')[0]
+        run_read = self.browser.runs.filter(tags='crazy').last()
         for related in ['parameters', 'resultindicators', 'resultfiles']:
             self.assertTrue(hasattr(run, related))
             self.assertTrue(hasattr(run_read, related))

@@ -34,6 +34,8 @@ class Browser:
         # only update the database if it doesnt exist yet
         if not osp.exists(self.settings.dbpath):
             self.update_db()
+        for n, m in self.models.items():
+            setattr(self, n+'s', m.objects)
         return
 
     def _install(self):
