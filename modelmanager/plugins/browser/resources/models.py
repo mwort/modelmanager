@@ -44,5 +44,5 @@ class ResultIndicator(mmmodels.TaggedValue):
     pass
 
 
-class ResultFile(mmmodels.File):
+class ResultFile(mmmodels.RunTagged, mmmodels.File):
     pass

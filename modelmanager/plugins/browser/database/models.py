@@ -43,7 +43,7 @@ def upload_to_path(instance, filename):
     return osp.join(instance.dirname, str(instance.run.pk), filename)
 
 
-class File(RunTagged):
+class File(models.Model):
     """
     An abstract model to save files with a run instance. Unlike the Django file
     field defaults, it accepts any file or buffer instance and file path to the
