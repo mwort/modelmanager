@@ -83,9 +83,9 @@ class Browser:
         models = {m.__name__.lower(): m for m in models}
         return models
 
-    def get_table(self, tablename, **filters):
+    def get(self, tablename, **filters):
         """
-        Get all rows from table or subset if filters are given.
+        Get all rows from a browser table or a subset if filters are given.
         """
         model = self.models[tablename]
         with self.settings:
