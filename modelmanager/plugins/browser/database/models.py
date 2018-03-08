@@ -24,7 +24,8 @@ class Run(models.Model):
 class RunTagged(models.Model):
     class Meta:
         abstract = True
-    run = models.ForeignKey('browser.Run', on_delete=models.CASCADE)
+    run = models.ForeignKey('browser.Run', on_delete=models.CASCADE,
+                            related_name='%(class)ss')
     tags = models.CharField(max_length=1024, blank=True, null=True)
 
 

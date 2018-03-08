@@ -30,8 +30,6 @@ class result:
 """
 
 TEST_MODELS = """
-from django.db import models
-
 class TestModel(models.Model):
     type = models.CharField(max_length=32)
 """
@@ -46,7 +44,8 @@ class BrowserProjectTestCase(unittest.TestCase):
         self.browser = self.project.browser
         self.models = self.browser.models
         # write custom model.py
-        with file(self.browser.resourcedir+'/models.py', 'w') as f:
+        modelpath = os.path.join(self.browser.resourcedir, 'models.py')
+        with file(modelpath, 'a') as f:
             f.write(TEST_MODELS)
         # populate standard models/tables
         run = self.models['run'](notes='testing notes')
@@ -75,12 +74,11 @@ class BrowserSetup(BrowserProjectTestCase):
 
 
 class Tables(BrowserProjectTestCase):
-    def test_project_model(self):
+    def test_project_models(self):
         from browser import models
         reload(models)
         self.browser.update_db()
-        self.assertEqual(apps.get_model('browser.testmodel'),
-                         models.TestModel)
+        self.assertEqual(apps.get_model('browser.testmodel'), models.TestModel)
         # write/read something to custom table
         v = self.browser.insert('testmodel', type="testing")
         self.assertEqual(v, self.browser.models['testmodel'].objects.first())
@@ -95,6 +93,19 @@ class Tables(BrowserProjectTestCase):
         run = self.browser.insert('run', notes='tests notes')   # run instance
         run_read = self.browser.get_table('run', notes__contains='tests')  # d
         self.assertEqual(run.notes, run_read[0]['notes'])
+        # with related fields
+        run = self.browser.insert('run', notes='has related', tags='crazy',
+                                  parameters=dict(name='px', value=0.77),
+                                  resultindicators=[dict(name='x', value=1.6),
+                                                    dict(name='n', value=0.1)])
+        # read again
+        run_read = self.browser.get_table('run', tags='crazy')[0]
+        for related in ['parameters', 'resultindicators', 'resultfiles']:
+            self.assertTrue(hasattr(run, related))
+            self.assertIn(related, run_read)
+            self.assertIs(type(run_read[related]), list)
+        self.assertEqual(len(run_read['resultindicators']), 2)
+        self.assertIs(type(run_read['resultindicators'][0]), dict)
 
 
 class DatabaseAdmin(BrowserProjectTestCase):

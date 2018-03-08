@@ -91,16 +91,47 @@ class Browser:
         with self.settings:
             # return lists to actually read the QuerySet from the DB
             if len(filters) > 0:
-                rows = list(model.objects.filter(**filters).values())
+                rows = model.objects.filter(**filters)
             else:
-                rows = list(model.objects.values())
-        return rows
+                rows = model.objects.all()
+            # get all in a list including related objects
+            rlist = []
+            fields = model._meta.get_fields()
+            relatedflds = [f for f in fields if f.is_relation]
+            for r in rows.iterator():
+                rdict = {f.name: getattr(r, f.name) for f in fields}
+                rdict.update({f.name: list(getattr(r, f.name).values())
+                              for f in relatedflds})
+                rlist.append(rdict)
+        return rlist
 
     def insert(self, tablename, **modelfields):
+        """
+        Insert entries into the table including related fields.
+
+        **modelfields : Keyword arguments of table fields with appropriate
+            values. Related table field values must be dicts or list of dicts.
+        """
         Model = self.models[tablename]
+        # filter realted fields
+        related = [(f, modelfields.pop(f.name))
+                   for f in Model._meta.get_fields()
+                   if any([f.one_to_many, f.one_to_one, f.many_to_many])
+                   and f.name in modelfields]
+        # deal with main model
         instance = Model(**modelfields)
         with self.settings:
             instance.save()
+        # insert related values
+        for field, value in related:
+            em = 'Value of %s must be a dict or a list of dicts.' % field.name
+            assert type(value) in [list, dict], em
+            value = value if type(value) is list else [value]
+            relm = field.related_model._meta.model_name
+            for rd in value:
+                assert type(rd) is dict, em
+                rd[field.remote_field.name] = instance
+                self.insert(relm, **rd)
         return instance
 
 
