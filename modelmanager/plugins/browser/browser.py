@@ -94,16 +94,7 @@ class Browser:
                 rows = model.objects.filter(**filters)
             else:
                 rows = model.objects.all()
-            # get all in a list including related objects
-            rlist = []
-            fields = model._meta.get_fields()
-            relf = [f for f in fields if (f.one_to_many or f.many_to_many)]
-            for r in rows.iterator():
-                rdict = {f.name: getattr(r, f.name) for f in fields}
-                rdict.update({f.name: list(getattr(r, f.name).values())
-                              for f in relf})
-                rlist.append(rdict)
-        return rlist
+        return list(rows)
 
     def insert(self, tablename, **modelfields):
         """

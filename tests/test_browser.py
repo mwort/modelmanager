@@ -83,7 +83,7 @@ class Tables(BrowserProjectTestCase):
         v = self.browser.insert('testmodel', type="testing")
         self.assertEqual(v, self.browser.models['testmodel'].objects.first())
         vdict = self.browser.get('testmodel')[0]
-        self.assertEqual(vdict['type'], 'testing')
+        self.assertEqual(vdict.type, 'testing')
 
     def test_table_read_write(self):
         # with django
@@ -92,7 +92,7 @@ class Tables(BrowserProjectTestCase):
         # with internal functions
         run = self.browser.insert('run', notes='tests notes')   # run instance
         run_read = self.browser.get('run', notes__contains='tests')  # d
-        self.assertEqual(run.notes, run_read[0]['notes'])
+        self.assertEqual(run.notes, run_read[0].notes)
         # with related fields
         run = self.browser.insert('run', notes='has related', tags='crazy',
                                   parameters=dict(name='px', value=0.77),
@@ -102,10 +102,11 @@ class Tables(BrowserProjectTestCase):
         run_read = self.browser.get('run', tags='crazy')[0]
         for related in ['parameters', 'resultindicators', 'resultfiles']:
             self.assertTrue(hasattr(run, related))
-            self.assertIn(related, run_read)
-            self.assertIs(type(run_read[related]), list)
-        self.assertEqual(len(run_read['resultindicators']), 2)
-        self.assertIs(type(run_read['resultindicators'][0]), dict)
+            self.assertTrue(hasattr(run_read, related))
+        # related field values are managers
+        self.assertEqual(len(run_read.resultindicators.all()), 2)
+        ResultIndicator = self.browser.models['resultindicator']
+        self.assertIs(type(run_read.resultindicators.first()), ResultIndicator)
 
 
 class DatabaseAdmin(BrowserProjectTestCase):
