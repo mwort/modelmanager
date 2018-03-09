@@ -86,45 +86,38 @@ class SettingsManager(object):
                       "You need to assign it with a keyword argument.")
             assert hasattr(obj, __name__), errmsg
             settings[obj.__name__] = obj
-        # filter settings
-        for name, obj in settings.items():
-            if inspect.isfunction(obj):
-                self.functions[name] = types.MethodType(obj, self._project)
-            elif inspect.isclass(obj):
-                # will be instatiated later when all variables and
-                # functions are available
-                self.classes[name] = obj
-            elif isinstance(obj, property):
-                self.properties[name] = obj
-            else:
-                # variable, append projectdir
-                self.variables[name] = self._filter_abs_path(obj)
+
+        settypes = utils.sort_settings(settings)
         # attach to project
         #  attributes
-        for k, v in self.variables.items():
-            setattr(self._project, k, v)
+        for k, v in settypes['variables'].items():
+            fv = self._filter_abs_path(v)
+            setattr(self._project, k, fv)
+            self.variables[k] = fv
         #  functions (name is same as defined in settings)
-        for k, f in self.functions.items():
-            setattr(self._project, k, f)
+        for k, f in settypes['functions'].items():
+            fm = types.MethodType(f, self._project)
+            setattr(self._project, k, fm)
             # store as Function
-            self.functions[k] = Function(f)
+            self.functions[k] = Function(fm)
         # properties
-        for k, p in self.properties.items():
+        for k, p in settypes['properties'].items():
+            self.properties[k] = p
             setattr(self._project.__class__, k, p)
             # deal with propertyplugins
             if getattr(p.fget, 'isplugin', False):
                 plnf = getattr(p.fget, 'plugin_functions', {})
                 plnf = {n: Function(v) for n, v in plnf.items()}
                 self.plugins[k] = (v, plnf)
-
         # classes to plugins
-        for k, c in self.classes.items():
+        for k, c in settypes['classes'].items():
             instance = self._instatiate(c)
             name = k.lower()
             methods = inspect.getmembers(instance, predicate=inspect.ismethod)
             methods = {n: Function(m) for (n, m) in methods
                        if not n.startswith('_')}
             setattr(self._project, name, instance)
+            self.classes[k] = c
             self.plugins[name] = (instance, methods)
         return
 

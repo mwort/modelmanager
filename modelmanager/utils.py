@@ -27,12 +27,36 @@ def load_module_path(path, name=None):
 
 
 def load_settings(pathormodule):
+    """
+    Load settings from a module or a module file.
+    """
     module = (pathormodule if inspect.ismodule(pathormodule)
               else load_module_path(pathormodule))
     # filter settings that should be ignored
     settings = {n: obj for n, obj in inspect.getmembers(module)
                 if not (inspect.ismodule(obj) or n.startswith('_'))}
     return settings
+
+
+def sort_settings(settings):
+    """
+    Separate a dictionary of python objects into setting types.
+
+    Returns a dictionary of dictionaries with type keys.
+    """
+    r = {n: {} for n in ("functions", "classes", "properties", "variables")}
+    for name, obj in settings.items():
+        if name.startswith('_'):
+            continue
+        elif inspect.isfunction(obj):
+            r["functions"][name] = obj
+        elif inspect.isclass(obj):
+            r["classes"][name] = obj
+        elif isinstance(obj, property):
+            r["properties"][name] = obj
+        else:
+            r["variables"][name] = obj
+    return r
 
 
 def get_paths_pattern(pattern, startdir):
