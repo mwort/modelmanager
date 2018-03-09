@@ -7,8 +7,9 @@ import shutil
 import inspect
 
 
-def load_module_path(name, path):
+def load_module_path(path, name=None):
     """Load a python module source file python version aware."""
+    name = name if name else osp.splitext(osp.basename(path))[0]
     if True:  # PY==27
         import imp
         m = imp.load_source(name, path)

@@ -78,7 +78,7 @@ class SettingsManager(object):
         self.file = osp.abspath(sfp[0])
         # save resourcedir to project
         self(resourcedir=osp.dirname(self.file))
-        return utils.load_module_path('settings', self.file)
+        return utils.load_module_path(self.file)
 
     def __call__(self, *objects, **settings):
         """
