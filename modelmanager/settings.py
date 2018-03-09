@@ -41,20 +41,14 @@ class SettingsManager(object):
         project. Can be used to reload the settings and override settings that
         are used when initialising plugins.
         """
-        # import module
-        self.module = self._load_module()
-        # filter settings that should be ignored
-        settings = {n: self.module.__dict__[n]
-                    for n in dir(self.module)
-                    if not (inspect.ismodule(self.module.__dict__[n]) or
-                            n.startswith('_'))}
-        # override
+        self.file = self._find_settings()
+        override_settings["resourcedir"] = osp.dirname(self.file)
+        settings = utils.load_settings(self.file)
         settings.update(override_settings)
-        # assign them to project
         self(**settings)
         return
 
-    def _load_module(self):
+    def _find_settings(self):
         from modelmanager.project import ProjectDoesNotExist
 
         # search settings file in any directory in this directory
@@ -75,10 +69,7 @@ class SettingsManager(object):
             msg = 'Found multiple modelmanager settings files (using *):\n'
             msg += '*'+'\n'.join(sfp)
             print(msg)
-        self.file = osp.abspath(sfp[0])
-        # save resourcedir to project
-        self(resourcedir=osp.dirname(self.file))
-        return utils.load_module_path(self.file)
+        return osp.abspath(sfp[0])
 
     def __call__(self, *objects, **settings):
         """

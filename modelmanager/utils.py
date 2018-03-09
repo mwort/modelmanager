@@ -26,6 +26,15 @@ def load_module_path(path, name=None):
     return m
 
 
+def load_settings(pathormodule):
+    module = (pathormodule if inspect.ismodule(pathormodule)
+              else load_module_path(pathormodule))
+    # filter settings that should be ignored
+    settings = {n: obj for n, obj in inspect.getmembers(module)
+                if not (inspect.ismodule(obj) or n.startswith('_'))}
+    return settings
+
+
 def get_paths_pattern(pattern, startdir):
     """
     Get all paths (including in subdirectories) matching pattern.
