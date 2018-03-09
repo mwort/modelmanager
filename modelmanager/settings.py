@@ -23,11 +23,13 @@ class SettingsManager(object):
 
     def __init__(self, project):
         self._project = project
+        # initial methods
+        initm = inspect.getmembers(project, predicate=inspect.ismethod)
+        self.functions = {n: Function(m) for n, m in initm
+                          if not n.startswith('_')}
         # attributes assigned through load
-        self.module = None
         self.file = None
         self.variables = {}
-        self.functions = {}
         self.properties = {}
         self.classes = {}
         self.plugins = {}
