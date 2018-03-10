@@ -208,6 +208,7 @@ class Template(object):
             if k not in values:
                 raise KeyError(self.field_not_found_error_msg % k)
             values[k] = v
+        formatted = self.template.format(**values)
         with file(self.filepath, 'w') as f:
-            f.write(self.template.format(**values))
+            f.write(formatted)
         return
