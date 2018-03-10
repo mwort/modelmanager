@@ -7,10 +7,9 @@ from modelmanager.commandline import execute_from_commandline
 
 try:
     project = modelmanager.project.Project()
-    functions = project.settings.functions
-    plugins = project.settings.plugins
+    functions = {}
 except modelmanager.project.ProjectDoesNotExist:
     functions = {'setup': Function(modelmanager.project.setup)}
-    plugins = {}
+    project = {}
 
-print(execute_from_commandline(functions, plugins))
+print(execute_from_commandline(project=project, functions=functions))
