@@ -24,9 +24,7 @@ class SettingsManager(object):
     def __init__(self, project):
         self._project = project
         # initial methods
-        initm = inspect.getmembers(project, predicate=inspect.ismethod)
-        self.functions = {n: Function(m) for n, m in initm
-                          if not n.startswith('_')}
+        self.functions = {}
         # attributes assigned through load
         self.file = None
         self.variables = {}
