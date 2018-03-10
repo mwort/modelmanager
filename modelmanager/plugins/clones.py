@@ -13,6 +13,8 @@ from modelmanager import utils
 
 class Clone:
     """
+    Project cloning plugin.
+
     Optional project variables:
     clonesdir    Directory where clones are created/found.
     clonelinks   List of relative paths for which symlinks will be created.

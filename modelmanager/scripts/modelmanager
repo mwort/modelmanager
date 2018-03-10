@@ -10,6 +10,6 @@ try:
     functions = {}
 except modelmanager.project.ProjectDoesNotExist:
     functions = {'setup': Function(modelmanager.project.setup)}
-    project = {}
+    project = None
 
 print(execute_from_commandline(project=project, functions=functions))

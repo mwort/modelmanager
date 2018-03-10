@@ -30,9 +30,9 @@ def execute_from_commandline(project=None, functions={},
     mainparser = argparse.ArgumentParser(description=description)
     # add functions
     subparser = add_subparser_functions(mainparser, functions, dest='function',
-                                        help='project function')
+                                        help='Functions and plugins')
     # add plugin functions
-    for n, (pi, methods) in plugins.items():
+    for n, (pi, methods) in sorted(plugins.items()):
         doc = (pi if inspect.isclass(pi) else pi.__class__).__doc__
         helpstr = doc.strip().split('\n')[0] if doc else n + ' plugin'
         pi_subparser = subparser.add_parser(n, help=helpstr)
@@ -69,7 +69,7 @@ def execute_from_commandline(project=None, functions={},
 
 def add_subparser_functions(mainparser, functions, **kwargs):
     subparser = mainparser.add_subparsers(**kwargs)
-    for l, f in functions.items():
+    for l, f in sorted(functions.items()):
         helpstr = f.doc.strip().split('\n')[0]
         fparser = subparser.add_parser(l, help=helpstr, description=f.doc,
                                        formatter_class=RawTextHelpFormatter)
