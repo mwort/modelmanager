@@ -162,6 +162,7 @@ def propertyplugin(cls):
     def plugin_instatiator(project):
         return cls(project)
     plugin_instatiator.isplugin = True
+    plugin_instatiator.plugin_class = cls
     # pass on plugin functions to property.fget.plugin_functions
     if hasattr(cls, 'plugin_functions'):
         mthds = {n: getattr(cls, n, None) for n in cls.plugin_functions}

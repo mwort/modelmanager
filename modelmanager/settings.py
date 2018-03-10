@@ -109,8 +109,9 @@ class SettingsManager(object):
             # deal with propertyplugins
             if getattr(p.fget, 'isplugin', False):
                 plnf = getattr(p.fget, 'plugin_functions', {})
+                cl = getattr(p.fget, 'plugin_class')
                 plnf = {n: Function(v) for n, v in plnf.items()}
-                self.plugins[k] = (v, plnf)
+                self.plugins[k] = (cl, plnf)
         # classes to plugins
         for k, c in settypes['classes'].items():
             instance = self._instatiate(c)
