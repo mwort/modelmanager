@@ -6,11 +6,11 @@ import cProfile, pstats
 
 from django.apps import apps
 from django.test import Client as TestClient
-from django.conf import settings as djsettings
 
 from modelmanager.plugins import Browser
 
 from test_project import create_project
+import imp
 
 TEST_SETTINGS = """
 from modelmanager.plugins.browser import Browser
@@ -45,7 +45,7 @@ class BrowserProjectTestCase(unittest.TestCase):
         self.models = self.browser.models
         # write custom model.py
         modelpath = os.path.join(self.browser.resourcedir, 'models.py')
-        with file(modelpath, 'a') as f:
+        with open(modelpath, 'a') as f:
             f.write(TEST_MODELS)
         # populate standard models/tables
         run = self.models['run'](notes='testing notes')
@@ -59,8 +59,8 @@ class BrowserProjectTestCase(unittest.TestCase):
         self.client = TestClient()
 
     def tearDown(self):
-        shutil.rmtree(self.project.projectdir)
         self.browser.settings.unset()
+        shutil.rmtree(self.project.projectdir)
 
 
 class BrowserSetup(BrowserProjectTestCase):
@@ -76,7 +76,7 @@ class BrowserSetup(BrowserProjectTestCase):
 class Tables(BrowserProjectTestCase):
     def test_project_models(self):
         from browser import models
-        reload(models)
+        imp.reload(models)
         self.browser.update_db()
         self.assertEqual(apps.get_model('browser.testmodel'), models.TestModel)
         # write/read something to custom table
@@ -126,7 +126,7 @@ class DatabaseAdmin(BrowserProjectTestCase):
             response = self.client.post('/browser/resultfile/add/', data)
         self.assertEqual(response.status_code, 302)  # redirected on success
         resfile = self.browser.models['resultfile'].objects.last()
-        self.assertEqual(resfile.file.read(), file(__file__).read())
+        self.assertEqual(resfile.file.read(), open(__file__).read())
 
 
 class ApiAdmin(BrowserProjectTestCase):
@@ -151,21 +151,21 @@ class ApiAdmin(BrowserProjectTestCase):
         self.check_url('/api/function/')
         fobj = models.Function.objects.get(name='test_function')
         response = self.check_url('/api/function/%s/change/call/' % fobj.id)
-        self.assertEqual(response.content, 'hello')
+        self.assertEqual(response.content, b'hello')
         models.Argument(name='world', value='"hello"', function=fobj).save()
         response = self.check_url('/api/function/%s/change/call/' % fobj.id)
-        self.assertEqual(response.content, 'hello')
+        self.assertEqual(response.content, b'hello')
         models.Argument(name='world', value='project.resourcedir',
                         function=fobj).save()
         response = self.check_url('/api/function/%s/change/call/' % fobj.id)
-        self.assertEqual(response.content, self.project.resourcedir)
+        self.assertEqual(response.content.decode(), self.project.resourcedir)
 
 
 class Files(BrowserProjectTestCase):
 
     def test_file_save_types(self):
         from django.core.files import File as DjFile
-        for f in [DjFile(file(__file__)), file(__file__), __file__]:
+        for f in [DjFile(open(__file__)), open(__file__), __file__]:
             resfile = self.browser.insert('resultfile',
                                           file=f, run=self.test_run)
             newpath = resfile.file.path

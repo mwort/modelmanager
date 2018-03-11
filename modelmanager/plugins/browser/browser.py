@@ -53,18 +53,18 @@ class Browser:
         return
 
     def update_db(self, verbosity=0):
-        self.manage('makemigrations', 'browser', '-v %1i' % verbosity)
-        self.manage('migrate', '-v %1i' % verbosity)
+        self.manage('makemigrations', 'browser',  verbosity=verbosity)
+        self.manage('migrate',  verbosity=verbosity)
         return
 
-    def manage(self, *args):
+    def manage(self, *args, **kwargs):
         """
         Convenience function for django manage.py commands.
         Dango needs to be setup for this to work.
         """
-        from django.core.management import execute_from_command_line
+        from django.core import management
         with self.settings:
-            execute_from_command_line(['manage'] + list(args))
+            management.call_command(*args, **kwargs)
         return
 
     def start(self):
@@ -190,9 +190,12 @@ class BrowserSettings:
         return True
 
     def unset(self):
+        from django.core.cache import cache  # This is the memcache cache.
+        cache.clear()
         django.conf.settings._wrapped = django.conf.empty
+
         if self.resourcedir in sys.path:
-            sys.path = list(filter(lambda a: a != self.resourcedir, sys.path))
+            sys.path = [a for a in sys.path if a != self.resourcedir]
         # clear files tmpdir
         if osp.exists(self.tmpfilesdir):
             shutil.rmtree(self.tmpfilesdir)

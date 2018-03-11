@@ -26,9 +26,9 @@ class Clones(unittest.TestCase):
         # create some dirs + files
         os.mkdir(self.pd('input'))
         os.mkdir(self.pd('output'))
-        file(self.pd('input/params.txt'), 'w').close()
-        file(self.pd('input/input.txt'), 'w').close()
-        file(self.pd('output/out.txt'), 'w').close()
+        open(self.pd('input/params.txt'), 'w').close()
+        open(self.pd('input/input.txt'), 'w').close()
+        open(self.pd('output/out.txt'), 'w').close()
         os.symlink(osp.relpath(__file__, self.projectdir), self.pd('sym.link'))
         return
 
@@ -81,8 +81,9 @@ class Clones(unittest.TestCase):
         clone = self.project.clone('testclone', linked=False,
                                    verbose=self.verbose)
         self.assertFalse(osp.islink(self.cd('testclone/mm')))
-        self.assertEqual(file(self.pd('mm/settings.py')).read(),
-                         file(self.cd('testclone/mm/settings.py')).read())
+        with open(self.cd('testclone/mm/settings.py')) as cdfile:
+            with open(self.pd('mm/settings.py')) as pdfile:
+                self.assertEqual(pdfile.read(), cdfile.read())
         # clone of clone
         clone.clone('testclone', verbose=self.verbose)
         self.assertTrue(osp.exists(self.cd('testclone/mm/clones/testclone')))

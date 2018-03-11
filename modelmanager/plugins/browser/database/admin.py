@@ -6,13 +6,13 @@ import os.path as osp
 
 from django.contrib import admin
 from django.apps import apps
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 
-if True:  # PY 27
+try:
     import StringIO as io
-else:
+except ImportError:
     import io
 
 

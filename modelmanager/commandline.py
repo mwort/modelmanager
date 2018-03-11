@@ -2,7 +2,7 @@
 import argparse
 from argparse import RawTextHelpFormatter
 import inspect
-from settings import Function
+from .settings import Function
 
 
 DESCRIPTION = "Your modelmanager command line interface."

@@ -4,7 +4,6 @@ import os
 import shutil
 import cProfile, pstats
 
-from django.conf import settings as djsettings
 import modelmanager as mm
 
 from test_project import create_project
@@ -23,12 +22,18 @@ class MultiProject(unittest.TestCase):
         self.projects = []
         for n in self.projectdirs:
             p = create_project(n, TEST_SETTINGS)
+            # needs to be imported after django setup
+            from django.conf import settings as djsettings
             print('Django configured: %s' % djsettings.configured)
+            self.assertTrue(djsettings.configured)
             p = mm.Project(n)
             print('Django configured: %s' % djsettings.configured)
+            self.assertTrue(djsettings.configured)
             p.browser.settings.unset()
             print('Django configured: %s' % djsettings.configured)
+            self.assertFalse(djsettings.configured)
             self.projects.extend([p])
+            self.assertTrue(os.path.exists(p.browser.settings.dbpath))
         return
 
     def tearDown(self):
@@ -41,6 +46,7 @@ class MultiProject(unittest.TestCase):
 
 
 if __name__ == '__main__':
-    cProfile.run('unittest.main()', 'pstats')
+    unittest.main()
+    #cProfile.run('unittest.main()', 'pstats')
     # print profile stats ordered by time
-    pstats.Stats('pstats').strip_dirs().sort_stats('time').print_stats(5)
+    #pstats.Stats('pstats').strip_dirs().sort_stats('time').print_stats(5)

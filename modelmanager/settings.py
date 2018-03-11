@@ -4,6 +4,7 @@ management and validation of the project settings defined in the settings
 .mm/settings.json file.
 '''
 
+import sys
 import json
 import os.path as osp
 from glob import glob
@@ -127,8 +128,8 @@ class SettingsManager(object):
         try:
             obj = cla(self._project)
         except Exception:
-            print("Failed to add %s to project." % cla.__name__)
             traceback.print_exc()
+            print("Failed to add %s to project." % cla.__name__)
             obj = None
         return obj
 
@@ -198,12 +199,22 @@ class Function(object):
         if isinstance(function, Function):
             function = function.function
         # get function arguments
-        fspec = inspect.getargspec(function)
+        if sys.version_info < (3, 5):
+            fspec = inspect.getargspec(function)
+            self.kwargs = fspec.keywords
+            args = fspec.args
+            self.defaults = list(fspec.defaults or [])
+        else:
+            fspec = inspect.getfullargspec(function)
+            self.kwargs = fspec.varkw
+            args = fspec.args + fspec.kwonlyargs
+            kwodef = [fspec.kwonlydefaults[k] for k in fspec.kwonlyargs]
+            self.defaults = list(fspec.defaults or []) + kwodef
+            self.annotations = fspec.annotations
         # create the parser for the functions
-        self.defaults = list(fspec.defaults or [])
-        nposargs = len(fspec.args) - len(self.defaults)
-        self.positional_arguments = list(fspec.args)[:nposargs]
-        self.optional_arguments = list(fspec.args)[nposargs:]
+        nposargs = len(args) - len(self.defaults)
+        self.positional_arguments = list(args)[:nposargs]
+        self.optional_arguments = list(args)[nposargs:]
         self.ismethod = inspect.ismethod(function)
         if self.ismethod:
             # remove first argument if not an optional argument
@@ -216,7 +227,6 @@ class Function(object):
         self.doc = (function.__doc__ or '')
         self.__doc__ = self.doc
         self.name = function.__name__
-        self.kwargs = fspec.keywords
         self.varargs = fspec.varargs
         self.function = function
         self.code = "".join(inspect.getsourcelines(function)[0])

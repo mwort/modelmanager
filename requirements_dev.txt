@@ -7,5 +7,5 @@ coverage
 pypi-publisher
 
 # modelmanager plugin dependencies
-django
-parse
+django==1.11.11
+parse==1.8.2

@@ -2,6 +2,7 @@
 
 import os
 import os.path as osp
+import sys
 import fnmatch
 import shutil
 import inspect
@@ -10,19 +11,17 @@ import inspect
 def load_module_path(path, name=None):
     """Load a python module source file python version aware."""
     name = name if name else osp.splitext(osp.basename(path))[0]
-    if True:  # PY==27
+    if sys.version_info < (3,):
         import imp
         m = imp.load_source(name, path)
-    elif False:  # PY==33/34
-        from importlib.machinery import SourceFileLoader
-        srcloader = SourceFileLoader(name, path)
-        m = srcloader.load_module()
-    else:  # PY 35
+    elif sys.version_info >= (3, 5):
         import importlib.util as iu
         spec = iu.spec_from_file_location(name, path)
         m = iu.module_from_spec(spec)
         spec.loader.exec_module(m)
-
+    else:
+        raise ImportError('This python version is not supported: %s'
+                          % sys.version_info)
     return m
 
 

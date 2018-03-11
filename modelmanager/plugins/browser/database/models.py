@@ -84,7 +84,7 @@ class File(models.Model):
         Converts a filepath, file object or buffer to a InMemoryUploadedFile.
         """
         if type(self.parsed_file) == str:
-            self.parsed_file = file(self.parsed_file, 'rb')
+            self.parsed_file = open(self.parsed_file, 'rb')
 
         if isinstance(self.parsed_file, file):
             self.parsed_file.seek(0)

@@ -45,7 +45,7 @@ class result:
 def create_project(projectdir, settingsstr):
     os.makedirs(projectdir)
     project = mm.project.setup(projectdir=projectdir)
-    with file(project.settings.file, 'w') as f:
+    with open(project.settings.file, 'w') as f:
         f.write(settingsstr)
     project.settings.load()
     return project
@@ -101,7 +101,7 @@ class Settings(ProjectTestCase):
 
     def test_property(self):
         self.assertEqual(self.project.test_property, self.project.projectdir)
-        self.assertEqual(str(self.project.result.__class__), 'settings.result')
+        self.assertIn('settings.result', str(self.project.result.__class__))
 
     def test_override(self):
         self.project.settings.load(test_variable=321)
@@ -126,18 +126,18 @@ class CommandlineInterface(ProjectTestCase):
         os.chdir(self.projectdir)
         proc = subprocess.Popen(['modelmanager', 'test_function', '--d=2'],
                                 stdout=subprocess.PIPE)
-        lns = [l.rstrip() for l in iter(proc.stdout.readline, '')]
+        lns = [l.rstrip() for l in proc.stdout.readlines()]
         self.assertEqual(len(lns), 1)
-        self.assertEqual(lns, ['3'])
+        self.assertEqual(lns, [b'3'])
         os.chdir('..')
 
     def test_plugin_method(self):
         os.chdir(self.projectdir)
         args = ['modelmanager', 'testplugin', 'test_method', '2']
         proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-        lns = [l.rstrip() for l in iter(proc.stdout.readline, '')]
+        lns = [l.rstrip() for l in proc.stdout.readlines()]
         self.assertEqual(len(lns), 1)
-        self.assertEqual(lns, ['2'])
+        self.assertEqual(lns, [b'2'])
         os.chdir('..')
 
 

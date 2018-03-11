@@ -24,9 +24,9 @@ class TestTemplates(test_project.ProjectTestCase):
         os.mkdir(os.path.join(self.project.projectdir, 'input'))
         os.mkdir(os.path.join(self.templates.resourcedir, 'input'))
         for p, (tmplt, tfile) in TEST_TEMPLATES.items():
-            with file(os.path.join(self.templates.resourcedir, p), 'w') as f:
+            with open(os.path.join(self.templates.resourcedir, p), 'w') as f:
                 f.write(tmplt)
-            with file(os.path.join(self.project.projectdir, p), 'w') as f:
+            with open(os.path.join(self.project.projectdir, p), 'w') as f:
                 f.write(tfile)
         return
 

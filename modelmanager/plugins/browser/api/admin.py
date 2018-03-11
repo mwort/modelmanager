@@ -1,9 +1,6 @@
 import os.path as osp
 
 from django.contrib import admin
-from django.apps import apps
-from django.core.urlresolvers import reverse
-from django.http import HttpResponse, HttpResponseRedirect
 from django.utils.safestring import mark_safe
 
 from . import models

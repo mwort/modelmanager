@@ -147,13 +147,13 @@ class Template(object):
         """
         Read a template file into a string.
         """
-        with file(self.templatepath) as f:
+        with open(self.templatepath) as f:
             tmpstr = f.read()
         return tmpstr
 
     @property
     def file(self):
-        with file(self.filepath) as f:
+        with open(self.filepath) as f:
             tmplted = f.read()
         return tmplted
 
@@ -192,7 +192,7 @@ class Template(object):
                 res[f] = result.named[f]
             # return value only
             if len(res) == 1:
-                return res[res.keys()[0]]
+                return res[list(res.keys())[0]]
         # return all
         else:
             res = result.named
@@ -209,6 +209,6 @@ class Template(object):
                 raise KeyError(self.field_not_found_error_msg % k)
             values[k] = v
         formatted = self.template.format(**values)
-        with file(self.filepath, 'w') as f:
+        with open(self.filepath, 'w') as f:
             f.write(formatted)
         return

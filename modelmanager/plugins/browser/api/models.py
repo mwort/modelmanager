@@ -28,7 +28,7 @@ class Function(models.Model):
 
 
 class Argument(models.Model):
-    function = models.ForeignKey(Function)
+    function = models.ForeignKey(Function, on_delete=models.CASCADE)
     name = models.CharField(max_length=64)
     value = models.CharField(max_length=64, blank=True, help_text=value_help)
     last_modified = models.DateTimeField(auto_now=True)
