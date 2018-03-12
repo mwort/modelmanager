@@ -126,7 +126,8 @@ class DatabaseAdmin(BrowserProjectTestCase):
             response = self.client.post('/browser/resultfile/add/', data)
         self.assertEqual(response.status_code, 302)  # redirected on success
         resfile = self.browser.models['resultfile'].objects.last()
-        self.assertEqual(resfile.file.read(), open(__file__).read())
+        with open(__file__, 'rb') as selfile:
+            self.assertEqual(resfile.file.read(), selfile.read())
 
 
 class ApiAdmin(BrowserProjectTestCase):

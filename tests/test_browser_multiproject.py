@@ -27,6 +27,8 @@ class MultiProject(unittest.TestCase):
             print('Django configured: %s' % djsettings.configured)
             self.assertTrue(djsettings.configured)
             p = mm.Project(n)
+            run = p.browser.insert('run', notes='test')
+            self.assertEqual(run.pk, 1)
             print('Django configured: %s' % djsettings.configured)
             self.assertTrue(djsettings.configured)
             p.browser.settings.unset()

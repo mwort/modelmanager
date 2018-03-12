@@ -187,11 +187,16 @@ class BrowserSettings:
         except Exception as e:
             print(e)
             raise Exception('Failed to activate Django :(')
+        # reset database path for multiple projects (connections is
+        # instantiated when django is loaded and is therfore not changed when
+        # the settings are changed)
+        django.db.connections.databases['default']['NAME'] = self.dbpath
         return True
 
     def unset(self):
-        from django.core.cache import cache  # This is the memcache cache.
-        cache.clear()
+        # close database so that on setup a new connection is opened
+        django.db.connections['default'].close()
+        # overwrite settings with empty
         django.conf.settings._wrapped = django.conf.empty
 
         if self.resourcedir in sys.path:
@@ -208,6 +213,4 @@ class BrowserSettings:
     def __exit__(self, exc_type, exc_value, traceback):
         if self.setup_on_with:
             self.unset()
-
-    def __del__(self):
-        self.unset()
+            self.setup_on_with = False

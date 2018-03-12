@@ -85,10 +85,13 @@ class File(models.Model):
         """
         if type(self.parsed_file) == str:
             self.parsed_file = open(self.parsed_file, 'rb')
-
-        if isinstance(self.parsed_file, file):
+        fil = [hasattr(self.parsed_file, a) for a in ('read', 'seek', 'close')]
+        if all(fil):
             self.parsed_file.seek(0)
-            f = BytesIO(self.parsed_file.read())
+            fcont = self.parsed_file.read()
+            if hasattr(fcont, 'encode'):
+                fcont = fcont.encode()
+            f = BytesIO(fcont)
             fn = osp.basename(self.parsed_file.name)
             self.parsed_file.close()
             if not self.copy:
