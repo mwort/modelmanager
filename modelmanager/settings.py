@@ -11,6 +11,7 @@ from glob import glob
 import inspect
 import types
 import traceback
+import re
 
 from modelmanager import utils
 
@@ -84,8 +85,8 @@ class SettingsManager(object):
         # sort out names of objects
         for obj in objects:
             errmsg = ("The object %s does not have a __name__ attribute.\n"
-                      "You need to assign it with a keyword argument.")
-            assert hasattr(obj, __name__), errmsg
+                      "You need to assign it with a keyword argument.") % obj
+            assert hasattr(obj, '__name__'), errmsg
             settings[obj.__name__] = obj
 
         settypes = utils.sort_settings(settings)
@@ -190,12 +191,24 @@ class SettingsManager(object):
         rep = '<SettingsManager for %s>' % self._project
         return rep
 
+    def check(self, verbose=True):
+        checked = {(n, None): f.configured for n, f in self.functions.items()}
+        for pin, (pi, met) in self.plugins.items():
+            checked.update({(n, pin): m.configured for n, m in met.items()})
+        if verbose:
+            print('Function configuration state:')
+            for (n, p), b in sorted(checked.items()):
+                fulp = p + '.' + n if p else n
+                print('[{0}] - {1}'.format('x' if b else ' ', fulp))
+        return None if verbose else checked
+
 
 class Function(object):
     """
     Representation of a project function.
     """
     def __init__(self, function):
+        from modelmanager import Project
         if isinstance(function, Function):
             function = function.function
         # get function arguments
@@ -211,25 +224,52 @@ class Function(object):
             kwodef = [fspec.kwonlydefaults[k] for k in fspec.kwonlyargs]
             self.defaults = list(fspec.defaults or []) + kwodef
             self.annotations = fspec.annotations
-        # create the parser for the functions
-        nposargs = len(args) - len(self.defaults)
-        self.positional_arguments = list(args)[:nposargs]
-        self.optional_arguments = list(args)[nposargs:]
-        self.ismethod = inspect.ismethod(function)
-        if self.ismethod:
-            # remove first argument if not an optional argument
-            self.positional_arguments = self.positional_arguments[1:]
-            self.instance = (function.im_self if hasattr(function, 'im_self')
-                             else None)
-        opsign = ['%s=%r' % (a, d) for a, d in zip(self.optional_arguments,
-                                                   self.defaults)]
-        self.signiture = ', '.join(self.positional_arguments + opsign)
+
         self.doc = (function.__doc__ or '')
         self.__doc__ = self.doc
         self.name = function.__name__
         self.varargs = fspec.varargs
         self.function = function
         self.code = "".join(inspect.getsourcelines(function)[0])
+        nposargs = len(args) - len(self.defaults)
+        self.positional_arguments = list(args)[:nposargs]
+        self.optional_arguments = list(args)[nposargs:]
+        self.ismethod = inspect.ismethod(function)
+        if self.ismethod or self.name is '__init__':
+            try:
+                self.instance = function.im_self
+                self.cls = function.im_class
+            except AttributeError:
+                self.instance = getattr(function, '__self__', None)
+                self.cls = self.instance.__class__
+            self.instance_name = self.positional_arguments[0]
+            self.positional_arguments = self.positional_arguments[1:]
+            # project method (and __init__ methods of plugins)
+            if (self.name is '__init__' or
+                isinstance(self.instance, Project) or
+                Project in self.cls.__bases__):
+                self.project = self.instance
+                self.plugin = None
+                self.project_instance_name = self.instance_name
+            else:
+                self.plugin = self.instance
+                # try to infer the project and project_instance_name
+                # this does not work for plugins that dont save the project
+                # instance in the __init__ method
+                try:
+                    pinname = self._project_name_from_plugin()
+                    pian = pinname.split('.')[1]
+                    self.project = getattr(self.instance, pian)
+                except Exception:
+                    pinname = 'None'
+                    self.project = None
+                self.project_instance_name = pinname
+
+            self.attributes_set = self._attributes_set()
+            self.attributes_used = self._attributes_used()
+        opsign = ['%s=%r' % (a, d) for a, d in zip(self.optional_arguments,
+                                                   self.defaults)]
+        self.signiture = ', '.join(self.positional_arguments + opsign)
         return
 
     def __call__(self, *args, **kwargs):
@@ -237,6 +277,37 @@ class Function(object):
 
     def __repr__(self):
         return '<Modelmanager function: %s >' % self.name
+
+    def _attributes_set(self, variableset=''):
+        pin = self.project_instance_name.replace('.', '\.')
+        reexp = pin + r'.(\w+) *= *' + variableset
+        attrs = re.findall(reexp, self.code)
+        reexp = (r'setattr\( *' + pin +
+                 ' *, *[\'"](.*?)[\'"] *,')
+        attrs += re.findall(reexp, self.code)
+        return sorted(set(attrs))
+
+    def _attributes_used(self):
+        aset = self.attributes_set
+        reexp = self.project_instance_name.replace('.', '\.') + r'.(\w+)'
+        attrs = sorted(set(re.findall(reexp, self.code)) - set(aset))
+        return attrs
+
+    def _project_name_from_plugin(self):
+        """
+        Get the dotted name of the project instance for plugin methods.
+        This is a risky and guessing operation, therefore best to 'try' this.
+        """
+        init = Function(self.cls.__init__)
+        parsedprojectname = init.positional_arguments[0]
+        aname = init._attributes_set(parsedprojectname)
+        name = self.instance_name + '.' + aname[0] if aname else None
+        return name
+
+    @property
+    def configured(self):
+        return self.ismethod and all([hasattr(self.project, a)
+                                      for a in self.attributes_used])
 
 
 class SettingsUndefinedError(AttributeError):

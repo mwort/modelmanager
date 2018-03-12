@@ -166,5 +166,5 @@ def propertyplugin(cls):
     if hasattr(cls, 'plugin_functions'):
         mthds = {n: getattr(cls, n, None) for n in cls.plugin_functions}
         plugin_instatiator.plugin_functions = {k: v for k, v in mthds.items()
-                                               if inspect.ismethod(v)}
+                                               if callable(v)}
     return property(plugin_instatiator)

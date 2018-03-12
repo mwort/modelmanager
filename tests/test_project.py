@@ -24,11 +24,12 @@ class TestPlugin:
     test_plugin_variable = 456
 
     def __init__(self, project):
-        self.project = project
+        self._project = project
         self.test_project_variable = project.test_variable
         return
 
     def test_method(self, testarg):
+        self._project.test_variable
         return testarg
 
 @property
@@ -127,6 +128,32 @@ class Settings(ProjectTestCase):
             self.project.someundefinedsetting()
         with self.assertRaises(AttributeError):
             self.project.someundefinedsetting
+
+    def test_function_introspection(self):
+        def test_function(project, d=1):
+            w = project.test_variable + project.test_session_variable
+            return w
+        self.project.settings(test_function)
+        func = self.project.settings.functions['test_function']
+        self.assertEqual(func.optional_arguments, ['d'])
+        self.assertEqual(func.project_instance_name, 'project')
+        usedvars = ['test_session_variable', 'test_variable']
+        self.assertEqual(func.attributes_used, usedvars)
+        self.assertEqual(func.project, self.project)
+        self.assertIsNone(func.plugin)
+        self.assertFalse(func.configured)
+        self.project.settings(test_session_variable=2)
+        self.assertTrue(func.configured)
+        pi, pimethods = self.project.settings.plugins['testplugin']
+        func = pimethods['test_method']
+        self.assertEqual(func.positional_arguments, ['testarg'])
+        self.assertEqual(func.project_instance_name, 'self._project')
+        self.assertEqual(func.attributes_used, ['test_variable'])
+        self.assertEqual(func.project, self.project)
+        self.assertEqual(func.plugin, pi)
+        self.assertTrue(func.configured)
+        # lazy testing the settings.check output
+        self.project.settings.check()
 
 
 class CommandlineInterface(ProjectTestCase):
