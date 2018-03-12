@@ -22,7 +22,7 @@ from django.apps import apps as djapps
 from modelmanager import utils
 
 
-class Browser:
+class Browser(object):
 
     def __init__(self, project):
         self.project = project
@@ -128,7 +128,7 @@ class Browser:
         return instance
 
 
-class BrowserSettings:
+class BrowserSettings(object):
     # switch to track django setup for with block
     setup_on_with = False
     dbname = 'db.sqlite3'

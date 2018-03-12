@@ -11,7 +11,7 @@ from modelmanager.project import ProjectDoesNotExist
 from modelmanager import utils
 
 
-class Clone:
+class Clone(object):
     """
     Project cloning plugin.
 
