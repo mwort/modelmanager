@@ -83,23 +83,21 @@ class File(models.Model):
         """
         Converts a filepath, file object or buffer to a InMemoryUploadedFile.
         """
-        if type(self.parsed_file) == str:
-            self.parsed_file = open(self.parsed_file, 'rb')
         fla = ('read', 'seek', 'close', 'name')
         if all([hasattr(self.parsed_file, a) for a in fla]):
-            self.parsed_file.seek(0)
-            fcont = self.parsed_file.read()
-            if hasattr(fcont, 'encode'):
-                fcont = fcont.encode()
-            f = BytesIO(fcont)
-            fn = osp.basename(self.parsed_file.name)
             self.parsed_file.close()
+            self.parsed_file = self.parsed_file.name
+        # read persistent files into a a BytesIO buffer
+        if type(self.parsed_file) == str:
+            with open(self.parsed_file, 'rb') as bf:
+                buf = BytesIO(bf.read())
+            fn = osp.basename(self.parsed_file)
             if not self.copy:
                 os.remove(self.parsed_file.name)
         else:
-            f = self.parsed_file
+            buf = self.parsed_file
             fn = self.parsed_filename
-        imf = InMemoryUploadedFile(f, None, fn, None, None, None)
+        imf = InMemoryUploadedFile(buf, None, fn, None, None, None)
         try:
             imf.readable()
         except Exception:
