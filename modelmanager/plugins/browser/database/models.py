@@ -85,8 +85,8 @@ class File(models.Model):
         """
         if type(self.parsed_file) == str:
             self.parsed_file = open(self.parsed_file, 'rb')
-        fil = [hasattr(self.parsed_file, a) for a in ('read', 'seek', 'close')]
-        if all(fil):
+        fla = ('read', 'seek', 'close', 'name')
+        if all([hasattr(self.parsed_file, a) for a in fla]):
             self.parsed_file.seek(0)
             fcont = self.parsed_file.read()
             if hasattr(fcont, 'encode'):
