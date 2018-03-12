@@ -120,6 +120,14 @@ class Settings(ProjectTestCase):
         self.assertTrue(self.project.settings.is_valid(dottedpath))
         self.assertEqual(self.project.settings[dottedpath], 456)
 
+    def test_undefined(self):
+        with self.assertRaises(mm.settings.SettingsUndefinedError):
+            self.project.someundefinedsetting
+        with self.assertRaises(mm.settings.SettingsUndefinedError):
+            self.project.someundefinedsetting()
+        with self.assertRaises(AttributeError):
+            self.project.someundefinedsetting
+
 
 class CommandlineInterface(ProjectTestCase):
     def test_function(self):

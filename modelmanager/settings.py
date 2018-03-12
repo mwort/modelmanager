@@ -237,3 +237,14 @@ class Function(object):
 
     def __repr__(self):
         return '<Modelmanager function: %s >' % self.name
+
+
+class SettingsUndefinedError(AttributeError):
+    def __init__(self, setting, additionalmessage=None):
+        addmessage = additionalmessage + '\n' if additionalmessage else ''
+        msg = ('{0}\n\nThe requested project setting is not defined.\n\n{1}'
+               'If you want to set it for this session only do: \n'
+               'project.settings({0}=<your-value>) \n\n'
+               'Or if you want to permanently add it to the project,\n define '
+               'it in your settings.py file.').format(setting, addmessage)
+        super(SettingsUndefinedError, self).__init__(msg)

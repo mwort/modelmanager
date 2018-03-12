@@ -12,7 +12,7 @@ import os
 from os import path as osp
 import shutil
 
-from modelmanager.settings import SettingsManager
+from modelmanager.settings import SettingsManager, SettingsUndefinedError
 
 
 class Project(object):
@@ -34,6 +34,12 @@ class Project(object):
         rpd = osp.relpath(self.projectdir, os.getcwd())
         r = ('<%s instance in: %s >' % (self.__class__.__name__, rpd))
         return r
+
+    def __getattr__(self, attr):
+        """
+        Fall-back if requested setting isnt defined.
+        """
+        raise SettingsUndefinedError(attr)
 
 
 def setup(projectdir='.', resourcedir='mm'):
