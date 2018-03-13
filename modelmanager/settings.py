@@ -45,7 +45,7 @@ class SettingsManager(object):
         """
         self.file = self._find_settings()
         override_settings["resourcedir"] = osp.dirname(self.file)
-        settings = utils.load_settings(self.file)
+        settings = load_settings(self.file)
         settings.update(override_settings)
         self(**settings)
         return
@@ -78,9 +78,12 @@ class SettingsManager(object):
         Central settings assign method.
 
         Calling the SettingsManager with either objects or keyword arguments
-        assigns the object or attribute to the project. Keyword arguments
-        allow custom naming (i.e. best for variables), while positional
-        arguments get assigned to the obj.__name__ in the project instance.
+        assigns the object or attribute to the project.
+
+        Arguments:
+        ----------
+        *objects: Any attachable object that has a __name__ attribute.
+        **settings: Keywords with name: settings-object pairs.
         """
         # sort out names of objects
         for obj in objects:
@@ -89,39 +92,71 @@ class SettingsManager(object):
             assert hasattr(obj, '__name__'), errmsg
             settings[obj.__name__] = obj
 
-        settypes = utils.sort_settings(settings)
+        settypes = sort_settings(settings)
         # attach to project
         #  attributes
         for k, v in settypes['variables'].items():
             fv = self._filter_abs_path(v)
             setattr(self._project, k, fv)
-            self.variables[k] = fv
         #  functions (name is same as defined in settings)
         for k, f in settypes['functions'].items():
             fm = types.MethodType(f, self._project)
             setattr(self._project, k, fm)
-            # store as Function
-            self.functions[k] = Function(fm)
+            settings[k] = fm
         # properties
         for k, p in settypes['properties'].items():
             self.properties[k] = p
             setattr(self._project.__class__, k, p)
+        # classes to plugins
+        for k, c in settypes['classes'].items():
+            instance = self._instatiate(c)
+            name = k.lower()
+            setattr(self._project, name, instance)
+            settings[name] = (c, instance)
+
+        self.register(**settings)
+        return
+
+    def register(self, **settings):
+        """
+        Add settings to the SettingsManager register.
+
+        **settings: Keyword settings.
+
+        Note: To register plugins, a tuple of (class, instance) is required,
+            otherwise plugins will be registered as variables. Class not part
+            of a (class, instance) tuple are not registered.
+        """
+        settypes = sort_settings(settings)
+
+        # check for plugins
+        for n in list(settypes['variables'].keys()):
+            v = settypes['variables'][n]
+            tuple2 = (type(v) == tuple and len(v) == 2)
+            if tuple2 and inspect.isclass(v[0]) and isinstance(v[1], v[0]):
+                # remove from variables
+                c, pi = settypes['variables'].pop(n)
+                methods = inspect.getmembers(pi, predicate=inspect.ismethod)
+                methods = {n: Function(m) for (n, m) in methods
+                           if not n.startswith('_')}
+                self.classes[c.__name__] = c
+                self.plugins[n] = (pi, methods)
+        #  attributes
+        for k, v in settypes['variables'].items():
+            fv = self._filter_abs_path(v)
+            self.variables[k] = fv
+        #  functions (name is same as defined in settings)
+        for k, f in settypes['functions'].items():
+            self.functions[k] = Function(f)
+        # properties
+        for k, p in settypes['properties'].items():
+            self.properties[k] = p
             # deal with propertyplugins
             if getattr(p.fget, 'isplugin', False):
                 plnf = getattr(p.fget, 'plugin_functions', {})
                 cl = getattr(p.fget, 'plugin_class')
                 plnf = {n: Function(v) for n, v in plnf.items()}
                 self.plugins[k] = (cl, plnf)
-        # classes to plugins
-        for k, c in settypes['classes'].items():
-            instance = self._instatiate(c)
-            name = k.lower()
-            methods = inspect.getmembers(instance, predicate=inspect.ismethod)
-            methods = {n: Function(m) for (n, m) in methods
-                       if not n.startswith('_')}
-            setattr(self._project, name, instance)
-            self.classes[k] = c
-            self.plugins[name] = (instance, methods)
         return
 
     def _instatiate(self, cla):
@@ -319,3 +354,36 @@ class SettingsUndefinedError(AttributeError):
                'Or if you want to permanently add it to the project,\n define '
                'it in your settings.py file.').format(setting, addmessage)
         super(SettingsUndefinedError, self).__init__(msg)
+
+
+def load_settings(pathormodule):
+    """
+    Load settings from a module or a module file.
+    """
+    module = (pathormodule if inspect.ismodule(pathormodule)
+              else utils.load_module_path(pathormodule))
+    # filter settings that should be ignored
+    settings = {n: obj for n, obj in inspect.getmembers(module)
+                if not (inspect.ismodule(obj) or n.startswith('_'))}
+    return settings
+
+
+def sort_settings(settings):
+    """
+    Separate a dictionary of python objects into setting types.
+
+    Returns a dictionary of dictionaries with type keys.
+    """
+    r = {n: {} for n in ("functions", "classes", "properties", "variables")}
+    for name, obj in settings.items():
+        if name.startswith('_'):
+            continue
+        elif inspect.isfunction(obj) or inspect.ismethod(obj):
+            r["functions"][name] = obj
+        elif inspect.isclass(obj):
+            r["classes"][name] = obj
+        elif isinstance(obj, property):
+            r["properties"][name] = obj
+        else:
+            r["variables"][name] = obj
+    return r
