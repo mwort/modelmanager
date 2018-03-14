@@ -33,6 +33,8 @@ class SettingsManager(object):
         self.properties = {}
         self.classes = {}
         self.plugins = {}
+        # register build-in project "settings"
+        self.register(**dict(inspect.getmembers(project)))
         return
 
     def load(self, **override_settings):
