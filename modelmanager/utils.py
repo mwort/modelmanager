@@ -105,7 +105,7 @@ def copy_resources(sourcedir, destinationdir, overwrite=False,
     return
 
 
-def propertyplugin(cls):
+class propertyplugin(property):
     """
     Class decorator to create a plugin that is instantiated and returned when
     the project attribute is used to conveniently combine class + constructor.
@@ -123,14 +123,17 @@ def propertyplugin(cls):
     project = swim.Project()
     project.result -> result instance
     """
+    isplugin = True
 
-    def plugin_instatiator(project):
-        return cls(project)
-    plugin_instatiator.isplugin = True
-    plugin_instatiator.plugin_class = cls
-    # pass on plugin functions to property.fget.plugin_functions
-    if hasattr(cls, 'plugin_functions'):
-        mthds = {n: getattr(cls, n, None) for n in cls.plugin_functions}
-        plugin_instatiator.plugin_functions = {k: v for k, v in mthds.items()
-                                               if callable(v)}
-    return property(plugin_instatiator)
+    def __init__(self, cls):
+        def plugin_instatiator(project):
+            return cls(project)
+        super(propertyplugin, self).__init__(plugin_instatiator,
+                                             doc=cls.__doc__)
+        self.plugin_class = cls
+        # pass on plugin functions to property.plugin_functions
+        if hasattr(cls, 'plugin_functions'):
+            mthds = {n: getattr(cls, n, None) for n in cls.plugin_functions}
+            self.plugin_functions = {k: v for k, v in mthds.items()
+                                     if callable(v)}
+        return

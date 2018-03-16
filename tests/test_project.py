@@ -38,8 +38,11 @@ def test_property(project):
 
 @utils.propertyplugin
 class result:
+    plugin_functions = ['plot']
     def __init__(self, project):
         pass
+    def plot(self):
+        return 'a-plot'
 """
 
 
@@ -103,6 +106,7 @@ class Settings(ProjectTestCase):
     def test_property(self):
         self.assertEqual(self.project.test_property, self.project.projectdir)
         self.assertIn('settings.result', str(self.project.result.__class__))
+        self.assertIn('plot', self.project.settings.plugins['result'][1])
 
     def test_override(self):
         self.project.settings.load(test_variable=321)

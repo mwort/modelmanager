@@ -46,6 +46,7 @@ class SettingsManager(object):
         are used when initialising plugins.
         """
         self.file = self._find_settings()
+        # resourcedir cant be overriden
         override_settings["resourcedir"] = osp.dirname(self.file)
         settings = load_settings(self.file)
         settings.update(override_settings)
@@ -154,9 +155,9 @@ class SettingsManager(object):
         for k, p in settypes['properties'].items():
             self.properties[k] = p
             # deal with propertyplugins
-            if getattr(p.fget, 'isplugin', False):
-                plnf = getattr(p.fget, 'plugin_functions', {})
-                cl = getattr(p.fget, 'plugin_class')
+            if getattr(p, 'isplugin', False):
+                plnf = getattr(p, 'plugin_functions', {})
+                cl = getattr(p, 'plugin_class')
                 plnf = {n: Function(v) for n, v in plnf.items()}
                 self.plugins[k] = (cl, plnf)
         return
