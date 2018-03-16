@@ -120,10 +120,10 @@ class Settings(ProjectTestCase):
 
     def test_str_retrieval(self):
         dottedpath = 'testplugin.test_plugin_variable'
-        self.assertTrue(self.project.settings.is_valid('test_variable'))
         self.assertEqual(self.project.settings['test_variable'], 123)
-        self.assertTrue(self.project.settings.is_valid(dottedpath))
         self.assertEqual(self.project.settings[dottedpath], 456)
+        with self.assertRaises(AttributeError):
+            self.project.settings['some_crap']
 
     def test_undefined(self):
         with self.assertRaises(mm.settings.SettingsUndefinedError):

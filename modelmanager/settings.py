@@ -22,19 +22,21 @@ class SettingsManager(object):
     '''
 
     settings_file_name = 'settings.py'
+    types = ('variables', 'properties', 'functions', 'classes')
+    # properties are always class attributes
+    properties = {}
 
     def __init__(self, project):
         self._project = project
-        # initial methods
-        self.functions = {}
         # attributes assigned through load
         self.file = None
         self.variables = {}
-        self.properties = {}
+        self.functions = {}
         self.classes = {}
         self.plugins = {}
-        # register build-in project "settings"
-        self.register(**dict(inspect.getmembers(project)))
+        # register build-in project "settings" excluding properties
+        sets = [p for p in project.__dict__.keys() if p not in self.properties]
+        self.register(**{k: getattr(project, k) for k in sets})
         return
 
     def load(self, **override_settings):
@@ -200,23 +202,11 @@ class SettingsManager(object):
         """
         mod = self._project
         for comp in key.split('.'):
-            if not hasattr(mod, comp):
-                raise KeyError('Project does not have attribute %s' % key)
-            mod = getattr(mod, comp)
-        return mod
-
-    def is_valid(self, key):
-        """
-        Check if key is a valid setting incl. dotted path to plugin attributes.
-        """
-        mod = self._project
-        components = key.split('.')
-        for i, comp in enumerate(components):
-            if not hasattr(mod, comp):
-                return False
-            if i < len(components)-1:
+            try:
                 mod = getattr(mod, comp)
-        return True
+            except AttributeError:
+                raise AttributeError('Project doesnt have attribute %s' % key)
+        return mod
 
     def serialise(self):
         '''Default serialisation happens here via json.dumps'''
