@@ -7,6 +7,12 @@ import test_project
 
 test_project.TEST_SETTINGS += """
 from modelmanager.plugins.templates import Templates
+from modelmanager.plugins.templates import TemplatesDict as _TemplatesDict
+from modelmanager import utils
+
+@utils.propertyplugin
+class params(_TemplatesDict):
+    template_patterns = ['param.txt']
 """
 
 TEST_TEMPLATES = {'input/test_param.txt': ("Test parameters\n{n:d} {d:f}",
@@ -68,6 +74,12 @@ class TestTemplates(test_project.ProjectTestCase):
         self.assertEqual(self.templates('n', templates='config'), 2)
         # value from last listed template is returned
         self.assertEqual(self.templates("n", templates=['param', 'config']), 2)
+
+    def test_templates_dict(self):
+        self.assertEqual(self.project.params['n'], 1)
+        print(self.project.params)
+        self.project.params['n'] = 3
+        self.assertEqual(self.templates('n'), 3)
 
 
 if __name__ == '__main__':

@@ -212,3 +212,50 @@ class Template(object):
         with open(self.filepath, 'w') as f:
             f.write(formatted)
         return
+
+
+class TemplatesDict(dict):
+    """
+    Dictionary that reads/writes to templates plugin intended to be used as
+    superclass of a @propertyplugin.
+
+    Subclass and set the template_patterns class attribute (list).
+    """
+    template_patterns = []
+
+    def __init__(self, project):
+        self.project = project
+        self.name = self.__class__.__name__
+        self.templates = [project.templates.get_template(pat)
+                          for pat in self.template_patterns]
+        self.update()
+
+    def __getitem__(self, key):
+        val = dict.__getitem__(self, key)
+        return val
+
+    def __setitem__(self, key, val):
+        self.update({key: val})
+
+    def __call__(self, *getvalues, **setvalues):
+        if setvalues:
+            self.update(setvalues)
+        if getvalues:
+            return [self[v] for v in getvalues]
+
+    def update(self, *args, **kwargs):
+        setdict = dict(*args, **kwargs)
+        if setdict:
+            self.project.templates(templates=self.template_patterns, **setdict)
+        for tplt in self.templates:
+            for k, v in tplt.read_values().items():
+                dict.__setitem__(self, k, v)
+        return
+
+    def __repr__(self):
+        tpltpaths = [osp.relpath(t.filepath) for t in self.templates]
+        rpr = '<%s: %s >\n' % (self.name, ', '.join(tpltpaths))
+        ne, le = 5, len(self)
+        entries = ['%r: %r' % (k, v) for k, v in self.items()[:min(ne, le)]]
+        cont = (', ... %s more' % (le - ne) if le > ne else '')
+        return rpr + 'Dict {' + ', '.join(entries) + cont + '}'
