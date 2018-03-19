@@ -115,6 +115,7 @@ class propertyplugin(property):
 
     Usage:
     ------
+    ```
     @propertyplugin
     class result:
         def __init__(self, project):
@@ -122,6 +123,7 @@ class propertyplugin(property):
 
     project = swim.Project()
     project.result -> result instance
+    ```
     """
     isplugin = True
 
@@ -130,6 +132,7 @@ class propertyplugin(property):
             return cls(project)
         super(propertyplugin, self).__init__(plugin_instatiator,
                                              doc=cls.__doc__)
+        self.__doc__ = cls.__doc__
         self.plugin_class = cls
         # pass on plugin functions to property.plugin_functions
         if hasattr(cls, 'plugin_functions'):
