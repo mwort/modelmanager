@@ -59,7 +59,7 @@ class Clone(object):
         """
         return self.load_clone(key)
 
-    def __call__(self, name, fresh=False, linked=True, verbose=False):
+    def create(self, name, fresh=False, linked=True, verbose=False):
         '''
         Clone the project by creating a dir in project.clonesdir.
 
@@ -118,6 +118,10 @@ class Clone(object):
 
         # return loaded project
         return self.load_clone(name)
+
+    def __call__(self, name, **kwargs):
+        """Create clone. See clone.create()"""
+        return self.create(name, **kwargs)
 
 
 class ClonedProject(Project):
