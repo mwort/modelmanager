@@ -266,10 +266,9 @@ class Function(object):
         if self.ismethod or self.name is '__init__':
             try:
                 self.instance = function.im_self
-                self.cls = function.im_class
             except AttributeError:
                 self.instance = getattr(function, '__self__', None)
-                self.cls = self.instance.__class__
+            self.cls = self.instance.__class__
             self.instance_name = self.positional_arguments[0]
             self.positional_arguments = self.positional_arguments[1:]
             # project method (and __init__ methods of plugins)
