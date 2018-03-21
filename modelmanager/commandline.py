@@ -32,12 +32,15 @@ def execute_from_commandline(project=None, functions={},
     subparser = add_subparser_functions(mainparser, functions, dest='function',
                                         help='Functions and plugins')
     # add plugin functions
-    for n, (pi, methods) in sorted(plugins.items()):
+    for n, (pi, mets) in sorted(plugins.items()):
         doc = (pi if inspect.isclass(pi) else pi.__class__).__doc__
         helpstr = doc.strip().split('\n')[0] if doc else n + ' plugin'
         pi_subparser = subparser.add_parser(n, help=helpstr)
-        add_subparser_functions(pi_subparser, methods, dest='method')
+        pi_mparser = add_subparser_functions(pi_subparser, mets, dest='method')
+        # this only works and is needed in PY3
+        pi_mparser.required = True
 
+    # parse arguments
     args = mainparser.parse_args()
     # send to function and return whatever is returned by the function
     # (pop removes call from dict)
@@ -45,7 +48,7 @@ def execute_from_commandline(project=None, functions={},
     func = argsd.pop('function')
     method = argsd.pop('method', None)
     # decide what function to call
-    if method:
+    if func in plugins:
         # get from project to also get propertyplugins
         plugin = getattr(project, func)
         function = Function(getattr(plugin, method))
@@ -73,21 +76,26 @@ def add_subparser_functions(mainparser, functions, **kwargs):
         helpstr = f.doc.strip().split('\n')[0]
         fparser = subparser.add_parser(l, help=helpstr, description=f.doc,
                                        formatter_class=RawTextHelpFormatter)
-        # function arguments
-        for a in f.positional_arguments:
-            fparser.add_argument(a, type=to_python)
-        if f.varargs:
-            fparser.add_argument(f.varargs, nargs='*', type=to_python, help=''
-                                 'parse any additional positional arguments')
-        for a, d in zip(f.optional_arguments, f.defaults):
-            args = '--'+a
-            hlpstr = '(default={0!r})'.format(d)
-            typ = type(d) if d else str
-            fparser.add_argument(args, default=d, help=hlpstr, type=typ)
-        if f.kwargs:
-            fparser.add_argument('--' + f.kwargs, nargs=argparse.REMAINDER,
-                                 help='parse any additional keyword arguments')
+        add_function_arguments(fparser, f)
     return subparser
+
+
+def add_function_arguments(parser, function):
+    f = function
+    for a in f.positional_arguments:
+        parser.add_argument(a, type=to_python)
+    if f.varargs:
+        parser.add_argument(f.varargs, nargs='*', type=to_python, help=''
+                            'parse any additional positional arguments')
+    for a, d in zip(f.optional_arguments, f.defaults):
+        args = '--'+a
+        hlpstr = '(default={0!r})'.format(d)
+        typ = type(d) if d else str
+        parser.add_argument(args, default=d, help=hlpstr, type=typ)
+    if f.kwargs:
+        parser.add_argument('--' + f.kwargs, nargs=argparse.REMAINDER,
+                            help='parse any additional keyword arguments')
+    return
 
 
 def to_python(v):
