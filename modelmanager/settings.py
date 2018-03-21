@@ -35,7 +35,7 @@ class SettingsManager(object):
         self.classes = {}
         self.plugins = {}
         # register build-in project "settings" excluding properties
-        sets = [p for p in project.__dict__.keys() if p not in self.properties]
+        sets = [p for p in dir(project) if p not in self.properties]
         self.register(**{k: getattr(project, k) for k in sets})
         return
 
