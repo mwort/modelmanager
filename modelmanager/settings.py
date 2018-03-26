@@ -25,6 +25,7 @@ class SettingsManager(object):
     types = ('variables', 'properties', 'functions', 'classes')
     # properties are always class attributes
     properties = {}
+    plugins = {}
 
     def __init__(self, project):
         self._project = project
@@ -33,7 +34,7 @@ class SettingsManager(object):
         self.variables = {}
         self.functions = {}
         self.classes = {}
-        self.plugins = {}
+
         # register build-in project "settings" excluding properties
         sets = [p for p in dir(project) if p not in self.properties]
         self.register(**{k: getattr(project, k) for k in sets})
