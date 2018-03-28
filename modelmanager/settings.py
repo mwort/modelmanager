@@ -270,8 +270,12 @@ class Function(object):
             except AttributeError:
                 self.instance = getattr(function, '__self__', None)
             self.cls = self.instance.__class__
-            self.instance_name = self.positional_arguments[0]
-            self.positional_arguments = self.positional_arguments[1:]
+            if len(self.positional_arguments) > 0:
+                self.instance_name = self.positional_arguments[0]
+                self.positional_arguments = self.positional_arguments[1:]
+            else:
+                # best guess
+                self.instance_name = 'self'
             # project method (and __init__ methods of plugins)
             if (self.name is '__init__' or
                 isinstance(self.instance, Project) or
