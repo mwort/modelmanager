@@ -25,10 +25,7 @@ def function_call(request, pk):
     Handle a project or plugin function call and return output/errors as html.
     """
     fobj = Function.objects.get(pk=pk)
-    pinstance = settings.PROJECT
-    if fobj.plugin:
-        pinstance = getattr(pinstance, fobj.plugin)
-    function = getattr(pinstance, fobj.name)
+    function = settings.PROJECT.settings[fobj.name]
 
     # evaluate arguments
     arguments, notset, evalerror = convert_arguments(fobj.argument_set.all())

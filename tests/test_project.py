@@ -16,7 +16,7 @@ from modelmanager import utils
 test_variable = 123
 test_relpath = 'mm/settings.py'
 
-def test_function(project, d=1):
+def test_function(project, d=1, edit=False):
     dd = d + 1
     return dd
 
@@ -38,7 +38,20 @@ def test_property(project):
 
 @utils.propertyplugin
 class result:
-    plugin_functions = ['plot']
+    plugin = ['plot', 'resultresult']
+
+    @utils.propertyplugin
+    class resultresult:
+        plugin = ['plot', 'som']
+        def __init__(self, project):
+            pass
+        def plot(self, kind='bar'):
+            print(kind)
+            return kind
+        def som(self):
+            print(1)
+            return
+
     def __init__(self, project):
         pass
     def plot(self):
@@ -62,10 +75,16 @@ class ProjectTestCase(unittest.TestCase):
 
     def setUp(self):
         self.project = create_project(self.projectdir, TEST_SETTINGS)
+        self.projectdir = self.project.projectdir
+        self.settings = self.project.settings
         return
 
     def tearDown(self):
         shutil.rmtree(self.projectdir)
+        # make sure properties are deleted between project creations
+        for p in self.settings.properties:
+            if hasattr(self.project.__class__,  p):
+                delattr(self.project.__class__,  p)
         return
 
 
@@ -106,10 +125,13 @@ class Settings(ProjectTestCase):
     def test_property(self):
         self.assertEqual(self.project.test_property, self.project.projectdir)
         self.assertIn('settings.result', str(self.project.result.__class__))
-        self.assertIn('plot', self.project.settings.plugins['result'][1])
+        self.assertIn('result', self.settings.plugins)
+        self.assertIn('result.plot', self.settings.functions)
+        self.assertIn('result.resultresult', self.settings.plugins)
+        self.assertIn('result.resultresult.plot', self.settings.functions)
 
     def test_override(self):
-        self.project.settings.load(test_variable=321)
+        self.settings.load(test_variable=321)
         self.assertEqual(self.project.test_variable, 321)
         self.assertEqual(self.project.testplugin.test_project_variable, 321)
 
@@ -120,10 +142,10 @@ class Settings(ProjectTestCase):
 
     def test_str_retrieval(self):
         dottedpath = 'testplugin.test_plugin_variable'
-        self.assertEqual(self.project.settings['test_variable'], 123)
-        self.assertEqual(self.project.settings[dottedpath], 456)
+        self.assertEqual(self.settings['test_variable'], 123)
+        self.assertEqual(self.settings[dottedpath], 456)
         with self.assertRaises(AttributeError):
-            self.project.settings['some_crap']
+            self.settings['some_crap']
 
     def test_undefined(self):
         with self.assertRaises(mm.settings.SettingsUndefinedError):
@@ -137,47 +159,54 @@ class Settings(ProjectTestCase):
         def test_function(project, d=1):
             w = project.test_variable + project.test_session_variable
             return w
-        self.project.settings(test_function)
-        func = self.project.settings.functions['test_function']
+        self.settings(test_function)
+        func = self.settings.functions['test_function']
         self.assertEqual(func.optional_arguments, ['d'])
-        self.assertEqual(func.project_instance_name, 'project')
-        usedvars = ['test_session_variable', 'test_variable']
-        self.assertEqual(func.attributes_used, usedvars)
-        self.assertEqual(func.project, self.project)
-        self.assertIsNone(func.plugin)
-        self.assertFalse(func.configured)
-        self.project.settings(test_session_variable=2)
-        self.assertTrue(func.configured)
-        pi, pimethods = self.project.settings.plugins['testplugin']
-        func = pimethods['test_method']
+        self.settings(test_session_variable=2)
+        func = self.settings.functions['testplugin.test_method']
         self.assertEqual(func.positional_arguments, ['testarg'])
-        self.assertEqual(func.project_instance_name, 'self._project')
-        self.assertEqual(func.attributes_used, ['test_variable'])
-        self.assertEqual(func.project, self.project)
-        self.assertEqual(func.plugin, pi)
-        self.assertTrue(func.configured)
-        # lazy testing the settings.check output
-        self.project.settings.check()
 
 
 class CommandlineInterface(ProjectTestCase):
-    def test_function(self):
+
+    def call(self, *argslist):
+        wd = os.getcwd()
         os.chdir(self.projectdir)
-        proc = subprocess.Popen(['modelmanager', 'test_function', '--d=2'],
-                                stdout=subprocess.PIPE)
-        lns = [l.rstrip() for l in proc.stdout.readlines()]
-        self.assertEqual(len(lns), 1)
-        self.assertEqual(lns, [b'3'])
-        os.chdir('..')
+        proc = subprocess.Popen(argslist, stdout=subprocess.PIPE,
+                                stderr=subprocess.PIPE)
+        proc.wait()
+        with proc.stderr as f:
+            stderrlines = [l.rstrip().decode() for l in f.readlines()]
+        print('\n'.join(stderrlines))
+        with proc.stdout as f:
+            stdoutlines = [l.rstrip().decode() for l in f.readlines()]
+        os.chdir(wd)
+        return stdoutlines, stderrlines
+
+    def test_function(self):
+        out, err = self.call('modelmanager', 'test_function', '--d=2')
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0], '3')
+        self.assertEqual(len(err), 1)
+        self.assertEqual(err[0], '>>> test_function(d=2)')
 
     def test_plugin_method(self):
-        os.chdir(self.projectdir)
-        args = ['modelmanager', 'testplugin', 'test_method', '2']
-        proc = subprocess.Popen(args, stdout=subprocess.PIPE)
-        lns = [l.rstrip() for l in proc.stdout.readlines()]
-        self.assertEqual(len(lns), 1)
-        self.assertEqual(lns, [b'2'])
-        os.chdir('..')
+        out, err = self.call('modelmanager', 'testplugin', 'test_method', '2')
+        self.assertEqual(len(out), 1)
+        self.assertEqual(out[0], '2')
+        self.assertEqual(len(err), 1)
+        self.assertEqual(err[0], '>>> testplugin.test_method(2)')
+        out, err = self.call('modelmanager', 'result', 'resultresult', 'plot')
+        self.assertEqual(out[0], "bar")
+        self.assertEqual(err[0], ">>> result.resultresult.plot()")
+
+    def test_flag(self):
+        # short
+        out, err1 = self.call('modelmanager', 'test_function', '-e')
+        self.assertEqual(err1[0], '>>> test_function(edit=True)')
+        # long
+        out, err2 = self.call('modelmanager', 'test_function', '--edit')
+        self.assertEqual(err1, err2)
 
 
 if __name__ == '__main__':

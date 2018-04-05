@@ -1,112 +1,201 @@
 """Module for everything to do with the commandline interface."""
+from __future__ import print_function
 import argparse
 from argparse import RawTextHelpFormatter
-import inspect
-from .settings import Function
+import traceback
+import pprint
+import sys
+
+from modelmanager.settings import FunctionInfo
 
 
-DESCRIPTION = "Your modelmanager command line interface."
+class CommandlineInterface(object):
+    """The command line interface plugin.
 
-
-def execute_from_commandline(project=None, functions={},
-                             description=DESCRIPTION):
-    """Build and execute the comandline interface.
-
-    project: project to read and execute functions and plugins for. If None,
+    Arguments
+    ---------
+    project : <project instance>, optional
+        Project to read and execute functions and plugins for. If None,
         functions must be given.
-    functions: a dictionary of functions for cases when no project exists or to
-        override project functions.
-    description: a program description.
+    functions : dict
+        Functions for cases when no project exists or to override project
+        functions. Defaults to ``project.settings.functions``.
+    description : str
+        Main program description. Default project.__doc__
     """
-    assert project or functions, 'Either a project or functions must be given.'
-    if project:
-        pfunc = {n: f for n, f in project.settings.functions.items()
-                 if n not in functions}
-        functions.update(pfunc)
-        plugins = project.settings.plugins
-    else:
-        plugins = {}
-    # create the top-level parser
-    mainparser = argparse.ArgumentParser(description=description)
-    # add functions
-    subparser = add_subparser_functions(mainparser, functions, dest='function',
-                                        help='Functions and plugins')
-    # add plugin functions
-    for n, (pi, mets) in sorted(plugins.items()):
-        doc = (pi if inspect.isclass(pi) else pi.__class__).__doc__
-        helpstr = doc.strip().split('\n')[0] if doc else n + ' plugin'
-        pi_subparser = subparser.add_parser(n, help=helpstr)
-        pi_mparser = add_subparser_functions(pi_subparser, mets, dest='method')
+
+    def __init__(self, project=None, functions={}, description=None):
+        """Build the comandline interface."""
+        em = 'Either a project or functions must be given.'
+        assert project or functions, em
+        self.function_info = {n: FunctionInfo(f) for n, f in functions.items()}
+        self.functions = functions
+        if project:
+            for n, f in project.settings.functions.items():
+                self.function_info.setdefault(n, f)
+            self.plugins = project.settings.plugins
+        else:
+            self.plugins = {}
+        self.project = project
+        mpargs = dict(description=description or project.__doc__,
+                      formatter_class=RawTextHelpFormatter)
+        self.mainparser = argparse.ArgumentParser(**mpargs)
+        self.mainsubparser = self.mainparser.add_subparsers()
+
+        # create plugin subparsers
+        pisubparsers = {}
+        for pi, picls in sorted(self.plugins.items()):
+            piname = pi.split('.')[-1]
+            pipi = '.'.join(pi.split('.')[:-1])
+            subp = pisubparsers[pipi] if pipi else self.mainsubparser
+            pisubparsers[pi] = self._add_plugin_subparser(piname, picls, subp)
+        # add functions
+        for l, f in sorted(self.function_info.items()):
+            pipi = '.'.join(l.split('.')[:-1])
+            subparser = pisubparsers[pipi] if pipi else self.mainsubparser
+            fparser = self._add_function_parser(subparser, l)
+            fparser.set_defaults(_function_address=l)
+        # attributes filled with parse_args
+        self.parsed_namespace = None
+        self.varargs = []
+        self.kwargs = {}
+        return
+
+    def parse_args(self, argslist=None):
+        """Parse arguments and convert vargs and kwargs.
+
+        Arguments
+        ---------
+        argslist : list
+            List of commandline arguments for ``argparse.parser.parse_args``.
+        """
+        args = self.mainparser.parse_args(argslist)
+        finfo = self.function_info[args._function_address]
+        # build vargs
+        varargs = [getattr(args, k) for k in finfo.positional_arguments]
+        if finfo.varargs:
+            for a in getattr(args, finfo.varargs):
+                varargs.append(self.to_python(a))
+        # build kwargs
+        kwargs = {}
+        for n, d in zip(finfo.optional_arguments, finfo.defaults):
+            short = n[:1]
+            val = getattr(args, (short if hasattr(args, short) else n))
+            if val != d:
+                kwargs[n] = val
+        if finfo.kwargs and getattr(args, finfo.kwargs):
+            kw = getattr(args, finfo.kwargs)
+            errmsg = 'Optional keywords must be "(--)name value" pairs.'
+            assert len(kw) % 2 == 0, errmsg
+            for n, v in zip(kw[::2], kw[1::2]):
+                kwargs[n.replace('-', '')] = self.to_python(v)
+        self.function_address = args._function_address
+        self.varargs = varargs
+        self.kwargs = kwargs
+        return varargs, kwargs
+
+    def run(self, function_address=None, varargs=None, kwargs=None):
+        """Run any project function from the commandline.
+
+        Arguments
+        ---------
+        function_address : str, optional
+            Dotted function path from project.
+            Default: ``self.function_address``
+        varargs : list, optional
+            Positional arguments parsed to function. Default: ``self.varargs``
+        kwargs : dict, optional
+            Keyword arguments parsed to function. Default: ``self.kwargs``
+        """
+        if not ((varargs and kwargs) or (self.varargs and self.kwargs)):
+            self.parse_args()
+        function_address = function_address or self.function_address
+        varargs = varargs or self.varargs
+        kwargs = kwargs or self.kwargs
+        # excecution message
+        vas = ', '.join(['%r' % a for a in varargs])
+        kws = ', '.join(['%s=%r' % (k, v) for k, v in sorted(kwargs.items())])
+        sig = vas + (', ' if kws and vas else '') + kws
+        print('>>> %s(%s)' % (function_address, sig),
+              file=sys.stderr)
+        function = self._get_function(function_address)
+        try:
+            res = function(*varargs, **kwargs)
+        except Exception:
+            traceback.print_exc()
+            return
+        pprint.pprint(res)
+        return res
+
+    def _get_function(self, address):
+        if address in self.functions:
+            return self.functions[address]
+        else:
+            return self.project.settings[address]
+
+    def _add_plugin_subparser(self, name, piclass, mainparser):
+        help = self._subparser_help(piclass.__doc__)
+        helpstr = help if help else name + ' plugin'
+        piparser = mainparser.add_parser(name, help=helpstr,
+                                         description=piclass.__doc__,
+                                         formatter_class=RawTextHelpFormatter)
+        pisubparser = piparser.add_subparsers()
         # this only works and is needed in PY3
-        pi_mparser.required = True
+        pisubparser.required = True
+        return pisubparser
 
-    # parse arguments
-    args = mainparser.parse_args()
-    # send to function and return whatever is returned by the function
-    # (pop removes call from dict)
-    argsd = args.__dict__
-    func = argsd.pop('function')
-    method = argsd.pop('method', None)
-    # decide what function to call
-    if func in plugins:
-        # get from project to also get propertyplugins
-        plugin = getattr(project, func)
-        function = Function(getattr(plugin, method))
-    else:
-        function = functions[func]
-    # build vargs
-    varargs = [argsd.pop(k) for k in function.positional_arguments]
-    if function.varargs:
-        varargs += [to_python(a) for a in argsd.pop(function.varargs)]
-    # build kwargs
-    kwargs = {n: argsd.pop(n) for n in function.optional_arguments}
-    if function.kwargs and argsd[function.kwargs]:
-        kw = argsd.pop(function.kwargs)
-        errmsg = 'Optional keywords must be "--name value" pairs.'
-        assert len(kw) % 2 == 0, errmsg
-        for n, v in zip(kw[::2], kw[1::2]):
-            kwargs[n.replace('-', '')] = to_python(v)
+    def _subparser_help(self, doc):
+        doc = doc if doc else ''
+        helpstr = doc.strip().split('\n')[0]
+        helpstr = helpstr[:43]+'...' if len(helpstr) > 45 else helpstr
+        return helpstr
 
-    return function(*varargs, **kwargs)
+    def _add_function_parser(self, subparser, functionpath):
+        f = self.function_info[functionpath]
+        helpstr = self._subparser_help(f.doc)
+        parser = subparser.add_parser(f.name, help=helpstr, description=f.doc,
+                                      formatter_class=RawTextHelpFormatter)
+        for a in f.positional_arguments:
+            parser.add_argument(a, type=self.to_python)
+        if f.varargs:
+            parser.add_argument(f.varargs, nargs='*', type=self.to_python,
+                                help='parse any additional positional '
+                                'arguments (key value)')
+        # short version possible?
+        shortkw = set([i[:1] for i in f.optional_arguments])
+        appendshort = (len(shortkw) == len(f.optional_arguments) and
+                       not any([i in f.positional_arguments for i in shortkw]))
+        for a, d in zip(f.optional_arguments, f.defaults):
+            typ = type(d) if d is not None else str
+            hasanno = hasattr(f, 'annotations') and a in f.annotations
+            help = (f.annotations[a]+' ' if hasanno else '')
+            kw = dict(help=help, default=d)
+            args = ['--'+a]
+            if typ == bool:
+                disen = {True: 'disable', False: 'enable'}
+                kw.update(action='store_%s' % str(not d).lower(),
+                          help=kw['help']+'(%s %s)' % (disen[d], a))
+            else:
+                addhelp = '(default={0!r})'.format(d)
+                kw.update(type=typ, help=kw['help']+addhelp)
+            # make short version if not already used (h = universal help)
+            if appendshort and a[:1] != 'h':
+                args.append('-'+a[:1])
+            parser.add_argument(*args, **kw)
+        if f.kwargs:
+            parser.add_argument('--' + f.kwargs, nargs=argparse.REMAINDER,
+                                help='parse any additional keyword arguments')
+        return parser
 
+    @staticmethod
+    def to_python(v):
+        """Try to convert v to a python type.
 
-def add_subparser_functions(mainparser, functions, **kwargs):
-    subparser = mainparser.add_subparsers(**kwargs)
-    for l, f in sorted(functions.items()):
-        helpstr = f.doc.strip().split('\n')[0]
-        fparser = subparser.add_parser(l, help=helpstr, description=f.doc,
-                                       formatter_class=RawTextHelpFormatter)
-        add_function_arguments(fparser, f)
-    return subparser
-
-
-def add_function_arguments(parser, function):
-    f = function
-    for a in f.positional_arguments:
-        parser.add_argument(a, type=to_python)
-    if f.varargs:
-        parser.add_argument(f.varargs, nargs='*', type=to_python, help=''
-                            'parse any additional positional arguments')
-    for a, d in zip(f.optional_arguments, f.defaults):
-        args = '--'+a
-        hlpstr = '(default={0!r})'.format(d)
-        typ = type(d) if d else str
-        parser.add_argument(args, default=d, help=hlpstr, type=typ)
-    if f.kwargs:
-        parser.add_argument('--' + f.kwargs, nargs=argparse.REMAINDER,
-                            help='parse any additional keyword arguments')
-    return
-
-
-def to_python(v):
-    """
-    Try to convert v to a python type.
-
-    If no conversion is succesful, v is returned as parsed.
-    """
-    value = v
-    try:
-        value = eval(v)
-    except Exception:
-        pass
-    return value
+        If no conversion is succesful, v is returned as parsed.
+        """
+        value = v
+        try:
+            value = eval(v)
+        except Exception:
+            pass
+        return value

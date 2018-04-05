@@ -1,15 +1,8 @@
 #/usr/bin/env python
-
-import modelmanager.project
-from modelmanager.settings import Function
-from modelmanager.commandline import execute_from_commandline
-
+from modelmanager import project, commandline
 
 try:
-    project = modelmanager.project.Project()
-    functions = {}
-except modelmanager.project.ProjectDoesNotExist:
-    functions = {'setup': Function(modelmanager.project.setup)}
-    project = None
-
-print(execute_from_commandline(project=project, functions=functions))
+    commandline.CommandlineInterface(project.Project()).run()
+except project.ProjectDoesNotExist:
+    functions = {'setup': project.setup}
+    commandline.CommandlineInterface(functions=functions).run()

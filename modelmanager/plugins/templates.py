@@ -222,6 +222,7 @@ class TemplatesDict(dict):
     Subclass and set the template_patterns class attribute (list).
     """
     template_patterns = []
+    plugin = ['__call__']
 
     def __init__(self, project):
         self.project = project
@@ -237,11 +238,12 @@ class TemplatesDict(dict):
     def __setitem__(self, key, val):
         self.update({key: val})
 
-    def __call__(self, *getvalues, **setvalues):
-        if setvalues:
-            self.update(setvalues)
-        if getvalues:
-            return [self[v] for v in getvalues]
+    def __call__(self, *get, **set):
+        """Get or set any parameter."""
+        if set:
+            self.update(set)
+        if get:
+            return [self[v] for v in get]
 
     def update(self, *args, **kwargs):
         setdict = dict(*args, **kwargs)
@@ -256,6 +258,7 @@ class TemplatesDict(dict):
         tpltpaths = [osp.relpath(t.filepath) for t in self.templates]
         rpr = '<%s: %s >\n' % (self.name, ', '.join(tpltpaths))
         ne, le = 5, len(self)
-        entries = ['%r: %r' % (k, v) for k, v in self.items()[:min(ne, le)]]
+        entries = ['%r: %r' % (k, v)
+                   for _, (k, v) in zip(range(min(ne, le)), self.items())]
         cont = (', ... %s more' % (le - ne) if le > ne else '')
         return rpr + 'Dict {' + ', '.join(entries) + cont + '}'

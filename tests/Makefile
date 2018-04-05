@@ -4,7 +4,7 @@ PLUGINS = browser browser_multiproject templates clone
 all: default plugins
 
 default:
-	$(PY) test_project.py -v
+	$(PY) test_project.py
 
 plugins:
 	for p in $(PLUGINS); do $(PY) test_$${p}.py ; done

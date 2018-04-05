@@ -20,6 +20,7 @@ class Clone(object):
     clonelinks   List of relative paths for which symlinks will be created.
     cloneignore  List of relative paths to ignore for clones
     """
+    plugin = ['__call__']
 
     def __init__(self, project):
         self.project = project
@@ -120,8 +121,8 @@ class Clone(object):
         return self.load_clone(name)
 
     def __call__(self, name, **kwargs):
-        """Create clone. See clone.create()"""
         return self.create(name, **kwargs)
+    __call__.__doc__ = create.__doc__
 
 
 class ClonedProject(Project):

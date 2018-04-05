@@ -22,22 +22,17 @@ class SettingsManager(object):
     '''
 
     settings_file_name = 'settings.py'
-    types = ('variables', 'properties', 'functions', 'classes')
-    # properties are always class attributes
-    properties = {}
-    plugins = {}
 
     def __init__(self, project):
         self._project = project
         # attributes assigned through load
         self.file = None
+        self.module = None
         self.variables = {}
         self.functions = {}
-        self.classes = {}
-
-        # register build-in project "settings" excluding properties
-        sets = [p for p in dir(project) if p not in self.properties]
-        self.register(**{k: getattr(project, k) for k in sets})
+        self.properties = {}
+        self.plugins = {}
+        self.register_plugin(project.__class__, '')
         return
 
     def load(self, **override_settings):
@@ -49,6 +44,7 @@ class SettingsManager(object):
         are used when initialising plugins.
         """
         self.file = self._find_settings()
+        self.module = utils.load_module_path(self.file)
         # resourcedir cant be overriden
         override_settings["resourcedir"] = osp.dirname(self.file)
         settings = load_settings(self.file)
@@ -104,65 +100,57 @@ class SettingsManager(object):
         for k, v in settypes['variables'].items():
             fv = self._filter_abs_path(v)
             setattr(self._project, k, fv)
+            self.variables[k] = v
         #  functions (name is same as defined in settings)
         for k, f in settypes['functions'].items():
             fm = types.MethodType(f, self._project)
             setattr(self._project, k, fm)
-            settings[k] = fm
+            self.register_function(fm, k)
         # properties
         for k, p in settypes['properties'].items():
-            self.properties[k] = p
             setattr(self._project.__class__, k, p)
+            self.properties[k] = p
+            if hasattr(p, 'plugin'):
+                self.register_plugin(p.plugin, k)
         # classes to plugins
         for k, c in settypes['classes'].items():
             instance = self._instatiate(c)
             name = k.lower()
             setattr(self._project, name, instance)
-            settings[name] = (c, instance)
-
-        self.register(**settings)
+            self.register_plugin(c, name)
         return
 
-    def register(self, **settings):
-        """
-        Add settings to the SettingsManager register.
+    def register_function(self, f, name):
+        assert callable(f)
+        self.functions[name] = FunctionInfo(f)
+        return
 
-        **settings: Keyword settings.
-
-        Note: To register plugins, a tuple of (class, instance) is required,
-            otherwise plugins will be registered as variables. Class not part
-            of a (class, instance) tuple are not registered.
-        """
-        settypes = sort_settings(settings)
-
-        # check for plugins
-        for n in list(settypes['variables'].keys()):
-            v = settypes['variables'][n]
-            tuple2 = (type(v) == tuple and len(v) == 2)
-            if tuple2 and inspect.isclass(v[0]) and isinstance(v[1], v[0]):
-                # remove from variables
-                c, pi = settypes['variables'].pop(n)
-                methods = inspect.getmembers(pi, predicate=inspect.ismethod)
-                methods = {n: Function(m) for (n, m) in methods
-                           if not n.startswith('_')}
-                self.classes[c.__name__] = c
-                self.plugins[n] = (pi, methods)
-        #  attributes
-        for k, v in settypes['variables'].items():
-            fv = self._filter_abs_path(v)
-            self.variables[k] = fv
-        #  functions (name is same as defined in settings)
-        for k, f in settypes['functions'].items():
-            self.functions[k] = Function(f)
-        # properties
-        for k, p in settypes['properties'].items():
-            self.properties[k] = p
-            # deal with propertyplugins
-            if getattr(p, 'isplugin', False):
-                plnf = getattr(p, 'plugin_functions', {})
-                cl = getattr(p, 'plugin_class')
-                plnf = {n: Function(v) for n, v in plnf.items()}
-                self.plugins[k] = (cl, plnf)
+    def register_plugin(self, cls, name):
+        assert inspect.isclass(cls)
+        assert type(name) is str, name
+        # get functions from instances only if declared
+        if hasattr(cls, 'plugin'):
+            pif = [(n, getattr(cls, n)) for n in cls.plugin]
+        else:
+            pif = [(i, o) for i, o in inspect.getmembers(cls)
+                   if not i.startswith('_')]
+        # filter callables and crawl on
+        for i, o in pif:
+            fname = name + '.' + i if name else i
+            if inspect.isclass(o):
+                self.register_plugin(o, fname)
+            elif hasattr(o, 'plugin'):
+                c = o.plugin if inspect.isclass(o.plugin) else o.__class__
+                self.register_plugin(c, fname)
+            # special case when plugin is only used as function
+            elif i == '__call__':
+                self.register_function(o, name)
+                self.functions[name].name = name
+                return
+            elif callable(o):
+                self.register_function(o, fname)
+        if name:
+            self.plugins[name] = cls
         return
 
     def _instatiate(self, cla):
@@ -220,6 +208,7 @@ class SettingsManager(object):
         rep = '<SettingsManager for %s>' % self._project
         return rep
 
+    # needs to be revised, maybe remove completely
     def check(self, verbose=True):
         checked = {(n, None): f.configured for n, f in self.functions.items()}
         for pin, (pi, met) in self.plugins.items():
@@ -232,13 +221,12 @@ class SettingsManager(object):
         return None if verbose else checked
 
 
-class Function(object):
+class FunctionInfo(object):
     """
     Representation of a project function.
     """
     def __init__(self, function):
-        from modelmanager import Project
-        if isinstance(function, Function):
+        if isinstance(function, FunctionInfo):
             function = function.function
         # get function arguments
         if sys.version_info < (3, 5):
@@ -254,62 +242,41 @@ class Function(object):
             self.defaults = list(fspec.defaults or []) + kwodef
             self.annotations = fspec.annotations
 
-        self.doc = (function.__doc__ or '')
+        self.doc = inspect.cleandoc(function.__doc__ or '')
         self.__doc__ = self.doc
         self.name = function.__name__
         self.varargs = fspec.varargs
         self.function = function
-        self.code = "".join(inspect.getsourcelines(function)[0])
+        code, self.firstcodeline = inspect.getsourcelines(function)
+        self.code = "".join(code)
         nposargs = len(args) - len(self.defaults)
         self.positional_arguments = list(args)[:nposargs]
         self.optional_arguments = list(args)[nposargs:]
-        self.ismethod = inspect.ismethod(function)
-        if self.ismethod or self.name is '__init__':
-            try:
-                self.instance = function.im_self
-            except AttributeError:
-                self.instance = getattr(function, '__self__', None)
-            self.cls = self.instance.__class__
-            if len(self.positional_arguments) > 0:
-                self.instance_name = self.positional_arguments[0]
-                self.positional_arguments = self.positional_arguments[1:]
-            else:
-                # best guess
-                self.instance_name = 'self'
-            # project method (and __init__ methods of plugins)
-            if (self.name is '__init__' or
-                isinstance(self.instance, Project) or
-                Project in self.cls.__bases__):
-                self.project = self.instance
-                self.plugin = None
-                self.project_instance_name = self.instance_name
-            else:
-                self.plugin = self.instance
-                # try to infer the project and project_instance_name
-                # this does not work for plugins that dont save the project
-                # instance in the __init__ method
-                try:
-                    pinname = self._project_name_from_plugin()
-                    pian = pinname.split('.')[1]
-                    self.project = getattr(self.instance, pian)
-                except Exception:
-                    pinname = 'None'
-                    self.project = None
-                self.project_instance_name = pinname
 
-            self.attributes_set = self._attributes_set()
-            self.attributes_used = self._attributes_used()
+        try:
+            self.cls = function.im_class
+        except AttributeError:
+            # in PY3 unbound methods are just functions
+            self.cls = None
+        if len(self.positional_arguments) > 0:
+            self.instance_name = self.positional_arguments[0]
+            self.positional_arguments = self.positional_arguments[1:]
+        else:
+            # best guess
+            self.instance_name = 'self'
         opsign = ['%s=%r' % (a, d) for a, d in zip(self.optional_arguments,
                                                    self.defaults)]
         self.signiture = ', '.join(self.positional_arguments + opsign)
         return
 
     def __call__(self, *args, **kwargs):
-        return self.function(*args, **kwargs)
+        print('Call %s via its project.' % self.name)
+        return
 
     def __repr__(self):
         return '<Modelmanager function: %s >' % self.name
 
+    # these introspection methods need to be called with a project instance somehow
     def _attributes_set(self, variableset=''):
         pin = self.project_instance_name.replace('.', '\.')
         reexp = pin + r'.(\w+) *= *' + variableset
@@ -325,21 +292,8 @@ class Function(object):
         attrs = sorted(set(re.findall(reexp, self.code)) - set(aset))
         return attrs
 
-    def _project_name_from_plugin(self):
-        """
-        Get the dotted name of the project instance for plugin methods.
-        This is a risky and guessing operation, therefore best to 'try' this.
-        """
-        init = Function(self.cls.__init__)
-        parsedprojectname = init.positional_arguments[0]
-        aname = init._attributes_set(parsedprojectname)
-        name = self.instance_name + '.' + aname[0] if aname else None
-        return name
-
-    @property
     def configured(self):
-        return self.ismethod and all([hasattr(self.project, a)
-                                      for a in self.attributes_used])
+        return all([hasattr(self.project, a) for a in self.attributes_used])
 
 
 class SettingsUndefinedError(AttributeError):
@@ -350,7 +304,8 @@ class SettingsUndefinedError(AttributeError):
                'project.settings({0}=<your-value>) \n\n'
                'Or if you want to permanently add it to the project,\n define '
                'it in your settings.py file.').format(setting, addmessage)
-        super(SettingsUndefinedError, self).__init__(msg)
+        AttributeError.__init__(self, msg)
+        return
 
 
 def load_settings(pathormodule):

@@ -10,6 +10,10 @@ import shutil
 def load_module_path(path, name=None):
     """Load a python module source file python version aware."""
     name = name if name else osp.splitext(osp.basename(path))[0]
+    # remove byte versions
+    for f in [path+'c', path+'o']:
+        if osp.exists(f):
+            os.remove(f)
     if sys.version_info < (3,):
         import imp
         m = imp.load_source(name, path)
@@ -125,18 +129,13 @@ class propertyplugin(property):
     project.result -> result instance
     ```
     """
-    isplugin = True
-
     def __init__(self, cls):
         def plugin_instatiator(project):
+            # take project from plugin if decorator used inside plugins
+            if hasattr(project, 'project'):
+                project = project.project
             return cls(project)
-        super(propertyplugin, self).__init__(plugin_instatiator,
-                                             doc=cls.__doc__)
+        super(propertyplugin, self).__init__(plugin_instatiator)
         self.__doc__ = cls.__doc__
-        self.plugin_class = cls
-        # pass on plugin functions to property.plugin_functions
-        if hasattr(cls, 'plugin_functions'):
-            mthds = {n: getattr(cls, n, None) for n in cls.plugin_functions}
-            self.plugin_functions = {k: v for k, v in mthds.items()
-                                     if callable(v)}
+        self.plugin = cls
         return

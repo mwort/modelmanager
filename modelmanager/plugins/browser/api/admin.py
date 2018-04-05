@@ -8,21 +8,15 @@ from . import models
 
 def update_functions():
     from django.conf import settings
-    project = settings.PROJECT
-    # project functions
-    pfunctions = [('', f) for f in project.settings.functions.values()]
-    # plugin functions
-    for p, (_, methods) in settings.PROJECT.settings.plugins.items():
-        pfunctions.extend([(p, m) for m in methods.values()])
 
-    for pi, f in pfunctions:
-        fentry = models.Function.objects.filter(name=f.name, plugin=pi)
+    for pi, f in settings.PROJECT.settings.functions.items():
+        fentry = models.Function.objects.filter(name=f.name)
         if len(fentry) > 1:
-            print('More than one function registered for %s.%s' % (f.name, pi))
+            print('More than one function registered for %s' % f.name)
         fentry = fentry.last()
         if fentry is None:
             fo = models.Function(name=f.name, kwargs=(f.kwargs is not None),
-                                 doc=f.doc, plugin=pi)
+                                 doc=f.doc)
             fo.save()
             # add arguments
             args = [dict(name=n, function=fo)
@@ -54,12 +48,12 @@ def result(obj):
 
 
 class FunctionAdmin(admin.ModelAdmin):
-    ordering = ['plugin', 'name']
-    list_display = [plugin, 'name', function_signiture, result]
+    ordering = ['name']
+    list_display = ['name', function_signiture, result]
     list_display_links = ['name']
-    readonly_fields = ['name', 'plugin', 'doc', 'kwargs']
+    readonly_fields = ['name', 'doc', 'kwargs']
     inlines = []  # defined as needed in self.get_form
-    search_fields = ['plugin', 'name']
+    search_fields = ['name', 'doc']
 
     def get_form(self, request, obj=None, **kwargs):
         # due to django admin form fields caching you must
