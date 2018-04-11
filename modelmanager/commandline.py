@@ -84,10 +84,10 @@ class CommandlineInterface(object):
             if val != d:
                 kwargs[n] = val
         if finfo.kwargs and getattr(args, finfo.kwargs):
-            kw = getattr(args, finfo.kwargs)
-            errmsg = 'Optional keywords must be "(--)name value" pairs.'
-            assert len(kw) % 2 == 0, errmsg
-            for n, v in zip(kw[::2], kw[1::2]):
+            kw = [a.split('=') for a in getattr(args, finfo.kwargs)]
+            errmsg = 'Optional keywords must be "(--)name=value" pairs.'
+            assert all([len(a) == 2 for a in kw]), errmsg
+            for n, v in kw:
                 kwargs[n.replace('-', '')] = self.to_python(v)
         self.function_address = args._function_address
         self.varargs = varargs
