@@ -166,7 +166,7 @@ class CommandlineInterface(object):
         appendshort = (len(shortkw) == len(f.optional_arguments) and
                        not any([i in f.positional_arguments for i in shortkw]))
         for a, d in zip(f.optional_arguments, f.defaults):
-            typ = type(d) if d is not None else str
+            typ = type(d) if d is not None else self.to_python
             hasanno = hasattr(f, 'annotations') and a in f.annotations
             help = (f.annotations[a]+' ' if hasanno else '')
             kw = dict(help=help, default=d)
