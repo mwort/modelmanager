@@ -165,12 +165,12 @@ class SettingsManager(object):
 
     def _filter_abs_path(self, variable):
         """
-        Check if variable is a string and an existing path relative path from
-        the projectdir. If so, make it absolute.
+        Return absolute path if variable is a relative path from project
+        directory and includes a /, else return variable.
         """
         if type(variable) == str:
             path = osp.join(self._project.projectdir, variable)
-            if osp.exists(path):
+            if osp.exists(path) and osp.sep in variable:
                 variable = path
         return variable
 
