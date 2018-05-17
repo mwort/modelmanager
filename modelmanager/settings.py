@@ -230,6 +230,8 @@ class FunctionInfo(object):
             function = function.function
         # get function arguments
         if sys.version_info < (3, 5):
+            if hasattr(function, 'decorated_function'):
+                function = function.decorated_function
             fspec = inspect.getargspec(function)
             self.kwargs = fspec.keywords
             args = fspec.args
