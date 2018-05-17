@@ -5,6 +5,7 @@ import os.path as osp
 from django.conf import settings
 from django.http import HttpResponse
 
+from modelmanager.settings import FunctionInfo
 from .models import Function
 
 IMGEXT = ['.jpg', '.png', '.gif', '.svg', '.bmp']
@@ -44,9 +45,10 @@ def function_call(request, pk):
         try:
             returned = function(**arguments)
         except Exception:
+            finfo = FunctionInfo(function)
             errormsg = ("<br>Something isn't right:<pre>{0}</pre><br>Here is "
                         "the function's source code:<br><pre>{1}</pre>"
-                        .format(traceback.format_exc(), function.code))
+                        .format(traceback.format_exc(), finfo.code))
     # return error if any
     if errormsg:
         result = errormsg
@@ -57,7 +59,7 @@ def function_call(request, pk):
             if result != returned:
                 break
     # make sure unicode string is returned
-    return HttpResponse(u'%s' % result)
+    return HttpResponse(u'%s' % (result,))
 
 
 def convert_arguments(args_queryset):

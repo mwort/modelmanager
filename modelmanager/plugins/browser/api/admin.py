@@ -1,5 +1,3 @@
-import os.path as osp
-
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 
@@ -10,12 +8,12 @@ def update_functions():
     from django.conf import settings
 
     for pi, f in settings.PROJECT.settings.functions.items():
-        fentry = models.Function.objects.filter(name=f.name)
+        fentry = models.Function.objects.filter(name=pi)
         if len(fentry) > 1:
-            print('More than one function registered for %s' % f.name)
+            print('More than one function registered for %s' % pi)
         fentry = fentry.last()
         if fentry is None:
-            fo = models.Function(name=f.name, kwargs=(f.kwargs is not None),
+            fo = models.Function(name=pi, kwargs=(f.kwargs is not None),
                                  doc=f.doc)
             fo.save()
             # add arguments
@@ -31,11 +29,9 @@ def update_functions():
 
 def function_signiture(obj):
     args = ['%s=%s' % (p.name, p.value) for p in obj.argument_set.all()]
+    if obj.kwargs:
+        args += ['**']
     return ', '.join(args)
-
-
-def plugin(obj):
-    return mark_safe('<a href="?plugin={0}">{0}</a>'.format(obj.plugin))
 
 
 def result(obj):
@@ -51,7 +47,8 @@ class FunctionAdmin(admin.ModelAdmin):
     ordering = ['name']
     list_display = ['name', function_signiture, result]
     list_display_links = ['name']
-    readonly_fields = ['name', 'doc', 'kwargs']
+    readonly_fields = ['name', lambda o: mark_safe('<pre>%s</pre>' % o.doc)]
+    exclude = ['doc', 'kwargs']
     inlines = []  # defined as needed in self.get_form
     search_fields = ['name', 'doc']
 
@@ -61,7 +58,7 @@ class FunctionAdmin(admin.ModelAdmin):
         if (obj):
             self.inlines = []
 
-        if len(obj.argument_set.all()) > 0:
+        if len(obj.argument_set.all()) > 0 or obj.kwargs:
             class ArgumentInlineAdmin(admin.TabularInline):
                 model = models.Argument
                 extra = 0
@@ -83,16 +80,10 @@ class FunctionAdmin(admin.ModelAdmin):
         return super(FunctionAdmin, self).get_queryset(request)
 
     def has_add_permission(self, request):
-        """Disable Add another if kwargs=False"""
         return False
 
     def has_change_permission(self, request, obj=None):
-        """Disable Add another if kwargs=False"""
         return True
-
-    def has_delete_permission(self, request, obj=None):
-        """Disable delete tick box."""
-        return False
 
 
 def update_settings():
@@ -100,9 +91,12 @@ def update_settings():
     variables = settings.PROJECT.settings.variables
     for vname, value in variables.items():
         fentry = models.Setting.objects.filter(name=vname).last()
+        if fentry and fentry.value != '%r' % value:
+            fentry = None
         if fentry is None:
             fentry = models.Setting(name=vname, value='%r' % value)
             fentry.save()
+    return
 
 
 class SettingAdmin(admin.ModelAdmin):
@@ -116,17 +110,10 @@ class SettingAdmin(admin.ModelAdmin):
         return super(SettingAdmin, self).get_queryset(request)
 
     def has_add_permission(self, request):
-
-        """Disable Add another if kwargs=False"""
         return False
 
     def has_change_permission(self, request, obj=None):
-        """Disable Add another if kwargs=False"""
         return True
-
-    def has_delete_permission(self, request, obj=None):
-        """Disable delete tick box."""
-        return False
 
 
 admin.site.register(models.Function, FunctionAdmin)
