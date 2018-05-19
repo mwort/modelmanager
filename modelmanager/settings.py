@@ -228,10 +228,10 @@ class FunctionInfo(object):
     def __init__(self, function):
         if isinstance(function, FunctionInfo):
             function = function.function
+        if hasattr(function, 'decorated_function'):
+            function = function.decorated_function
         # get function arguments
         if sys.version_info < (3, 5):
-            if hasattr(function, 'decorated_function'):
-                function = function.decorated_function
             fspec = inspect.getargspec(function)
             self.kwargs = fspec.keywords
             args = fspec.args
