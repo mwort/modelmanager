@@ -1,29 +1,24 @@
 {% extends "admin/change_form.html" %}
+{% load static %}
 
 {% block extrastyle %}
   {{ block.super }}
-<style>
-  img {
-    max-width: 100%;
-    max-height: 100%;
-  }
-</style>
+  <link rel="stylesheet" href="{% static 'style.css' %}" />
 {% endblock %}
 
 {% block submit_buttons_bottom %}
 
 <div class="submit-row">
-<input type="submit" value="Update" name="_continue">
+<input type="submit" value="Update arguements" name="_continue">
+<input type="submit" value="Run" name="run">
 </div>
 
 <div class="module">
 <h2>RESULTS</h2>
 
-<pre>
-<div id='results'>
+<div id='results' class='pre'>
 
 </div>
-</pre>
 
 </div>
 
@@ -32,14 +27,12 @@
 
 {% block admin_change_form_document_ready %}
 {{ block.super }}
+<script src="{% static 'api.js' %}" charset="utf-8"></script>
 <script type="text/javascript">
-
-django.jQuery.ajax({url: 'call', // will be appended to current url
-                    async: true,
-                    success: function (d) {django.jQuery('#results').append(d)},
-                    error: function (e) {console.log(e)}
-    });
-
+  django.jQuery("input[name='run']").click(function(e) {
+    e.preventDefault();
+    call_function('../call', '#results');
+  });
 </script>
 
 {% endblock %}

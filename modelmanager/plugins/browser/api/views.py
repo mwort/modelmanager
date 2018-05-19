@@ -27,7 +27,6 @@ def function_call(request, pk):
     """
     fobj = Function.objects.get(pk=pk)
     function = settings.PROJECT.settings[fobj.name]
-
     # evaluate arguments
     arguments, notset, evalerror = convert_arguments(fobj.argument_set.all())
     errormsg = None
@@ -42,6 +41,7 @@ def function_call(request, pk):
         errormsg = ''.join([msg.format(n, *v) for n, v in evalerror.items()])
     else:
         # evaluate function
+        print('Calling %s(**%r)' % (fobj.name, arguments))
         try:
             returned = function(**arguments)
         except Exception:

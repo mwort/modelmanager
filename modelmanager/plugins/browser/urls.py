@@ -23,8 +23,10 @@ from .api.views import function_call
 
 urlpatterns = [
     # function call
-    url(r'api/function/(?P<pk>\d+)/change/call/$', function_call),
+    url(r'api/function/(?P<pk>.+)/call/$', function_call),
     url(r'', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
-admin.site.site_header = 'Modelmanager'
+admin.site.site_title = settings.PROJECT.__module__
+admin.site.site_header = admin.site.site_title+': '+settings.PROJECT.projectdir
+admin.site.index_title = admin.site.site_title+' administration'

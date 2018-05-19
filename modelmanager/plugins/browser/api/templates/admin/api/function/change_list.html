@@ -1,35 +1,28 @@
 {% extends "admin/change_list.html" %}
+{% load static %}
 
 {% block extrastyle %}
   {{ block.super }}
-<style media="screen">
-  #container {
-    min-width: 0;
-  }
-  #content {
-    padding: 20px;
-  }
+  <link rel="stylesheet" href="{% static 'style.css' %}" />
+  <style media="screen">
+  /* split divs side by side */
   #content-main {
-    width: 39%;
-    min-width: 440px;
+    width: 34%;
+    min-width: 400px;
   }
   #content-results {
     float: right;
-    width: 59%;
+    width: 64%;
     min-width: 440px;
   }
-  #results {
-    vertical-align: middle;
-    margin: 20px;
+  /* constrain looong function list */
+  #changelist-form .results {
+    max-height: 500px;
   }
-  input[type="button"] {
-    padding: 2px 8px;
+  #searchbar {
+    width: 50%;
   }
-  img {
-    max-width: 100%;
-    max-height: 100%;
-  }
-</style>
+  </style>
 {% endblock %}
 
 
@@ -38,35 +31,21 @@
 
 <div id="content-results" class="module">
   <h2>Results</h2>
-  <div id="results">
-    <h5>Select configured function.</h5>
+  <div id="results" class='pre'>
+    Select configured function.
   </div>
 </div>
 
+
+<script src="{% static 'api.js' %}" charset="utf-8"></script>
 <script type="text/javascript">
+// remove 'Select function to change'
+django.jQuery('#content h1').remove();
 
-var loaded_results = {}
-
-django.jQuery("input[value='Run']").click(function(e) {
+django.jQuery("a[action='call']").click(function(e) {
     e.preventDefault();
-    var reselem = django.jQuery('#results');
     var id = django.jQuery(this).attr('name');
-    if (loaded_results[id]) {
-      reselem.html(loaded_results[id]);
-    } else {
-      reselem.html('<h5>Thinking...</h5>');
-      django.jQuery.ajax({url:  id + '/change/call/', // will be appended to current url
-                          async: true,
-                          success: function(d) {
-                            reselem.html(d);
-                            loaded_results[id] = d;
-                          },
-                          error: function (e) {
-                            console.log(e);
-                            reselem.html('<h5>Something went wrong.</h5>')
-                          }
-        });
-    }
+    call_function(id+'/call', '#results');
 });
 </script>
 {% endblock %}

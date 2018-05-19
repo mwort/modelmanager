@@ -1,17 +1,18 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
+from django.templatetags.static import static
 
 from . import models
 
 
+@admin.register(models.Function)
 class FunctionAdmin(admin.ModelAdmin):
     ordering = ['name']
-    list_display = ['name', "function_signiture", "result"]
-    list_display_links = ['name']
-    readonly_fields = ['name', "description"]
-    exclude = ['doc', 'kwargs']
+    list_display = ["function", "configured"]
+    readonly_fields = ['signiture', "description"]
+    exclude = ['name', 'doc', 'kwargs']
     inlines = []  # defined as needed in self.get_form
-    search_fields = ['name', 'doc']
+    search_fields = ['name']
 
     def get_form(self, request, obj=None, **kwargs):
         # due to django admin form fields caching you must
@@ -68,24 +69,33 @@ class FunctionAdmin(admin.ModelAdmin):
                     models.Argument(**a).save()
         return
 
-    def function_signiture(self, obj):
-        args = ['%s=%s' % (p.name, p.value) for p in obj.argument_set.all()]
+    def function(self, obj):
+        callurl = '%s/change/' % obj.pk
+        is_configured = obj.is_configured()
+        if is_configured:
+            ln = u'<a name="{i}" href="#" action="call">{n}</a>'
+        else:
+            ln = '<a href="{url}">{n}</a>'
+        elm = ln.format(i=obj.pk, url=callurl, n=obj.name)
+        return mark_safe(elm)
+
+    def configured(self, obj):
+        ny = 'yes' if obj.is_configured() else 'no'
+        imgurl = static('admin/img/icon-%s.svg' % ny)
+        sln = '&ensp;<a href="{pk}/change/"><img src="{iu}" alt="True"></a>'
+        return mark_safe(sln.format(pk=obj.pk, iu=imgurl))
+
+    def signiture(self, obj):
+        sign = ['%s=%s' % (p.name, p.value) for p in obj.argument_set.all()]
         if obj.kwargs:
-            args += ['**']
-        return ', '.join(args)
+            sign += ['**kw']
+        return mark_safe('<pre>%s(%s)</pre>' % (obj.name, ', '.join(sign)))
 
     def description(self, obj):
         return mark_safe('<pre>%s</pre>' % obj.doc)
 
-    def result(self, obj):
-        if obj.is_configured():
-            inpt = '<input type="button" name="%s" value="Run"></input>'
-        else:
-            inpt = ('<a href="%s/change/"><input type="button" '
-                    'value="Configure"></input></a>')
-        return mark_safe(inpt % obj.id)
 
-
+@admin.register(models.Setting)
 class SettingAdmin(admin.ModelAdmin):
     ordering = ['name']
     list_display = ['name', 'value']
@@ -113,7 +123,3 @@ class SettingAdmin(admin.ModelAdmin):
                 fentry = models.Setting(name=vname, value='%r' % value)
                 fentry.save()
         return
-
-
-admin.site.register(models.Function, FunctionAdmin)
-admin.site.register(models.Setting, SettingAdmin)

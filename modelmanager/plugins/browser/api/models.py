@@ -12,12 +12,15 @@ class Setting(models.Model):
 
 
 class Function(models.Model):
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=128, primary_key=True)
     doc = models.TextField(verbose_name='Description', blank=True)
     kwargs = models.BooleanField(verbose_name='Accept any keyword',
                                  default=False)
 
     def __unicode__(self):
+        return self.name
+
+    def __str__(self):
         return self.name
 
     def is_configured(self):

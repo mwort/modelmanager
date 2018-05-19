@@ -134,7 +134,7 @@ class ApiAdmin(BrowserProjectTestCase):
     urls = ['/api/',
             '/api/function/',
             '/api/setting/',
-            '/api/function/1/change/']
+            '/api/function/test_function/change/']
 
     def check_url(self, url):
         print('Checking %s' % url)
@@ -148,17 +148,18 @@ class ApiAdmin(BrowserProjectTestCase):
 
     def test_call(self):
         from modelmanager.plugins.browser.api import models
+        callurl = '/api/function/%s/call/'
         # make sure function table is populated
         self.check_url('/api/function/')
         fobj = models.Function.objects.get(name='test_function')
-        response = self.check_url('/api/function/%s/change/call/' % fobj.id)
+        response = self.check_url(callurl % fobj.pk)
         self.assertEqual(response.content, b'hello')
         models.Argument(name='world', value='"hello"', function=fobj).save()
-        response = self.check_url('/api/function/%s/change/call/' % fobj.id)
+        response = self.check_url(callurl % fobj.pk)
         self.assertEqual(response.content, b'hello')
         models.Argument(name='world', value='project.resourcedir',
                         function=fobj).save()
-        response = self.check_url('/api/function/%s/change/call/' % fobj.id)
+        response = self.check_url(callurl % fobj.pk)
         self.assertEqual(response.content.decode(), self.project.resourcedir)
 
 
