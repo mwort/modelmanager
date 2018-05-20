@@ -9,3 +9,4 @@ pypi-publisher
 # modelmanager plugin dependencies
 django==1.11.11
 parse==1.8.2
+pandas==0.22.0
