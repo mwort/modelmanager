@@ -25,6 +25,29 @@ def configured(obj):
     return mark_safe(sln.format(cu=change_url, iu=imgurl))
 
 
+def update_functions():
+    from django.conf import settings
+
+    for pi, f in settings.PROJECT.settings.functions.items():
+        fentry = models.Function.objects.filter(name=pi)
+        if len(fentry) > 1:
+            print('More than one function registered for %s' % pi)
+        fentry = fentry.last()
+        if fentry is None:
+            fo = models.Function(name=pi, kwargs=(f.kwargs is not None),
+                                 doc=f.doc)
+            fo.save()
+            # add arguments
+            args = [dict(name=n, function=fo)
+                    for n in f.positional_arguments]
+            args += [dict(name=n, value='%r' % d, function=fo)
+                     for n, d in zip(f.optional_arguments, f.defaults)]
+            # insert
+            for a in args:
+                models.Argument(**a).save()
+    return
+
+
 @admin.register(models.Function)
 class FunctionAdmin(admin.ModelAdmin):
     ordering = ['name']
@@ -58,7 +81,7 @@ class FunctionAdmin(admin.ModelAdmin):
         return super(FunctionAdmin, self).get_form(request, obj, **kwargs)
 
     def get_queryset(self, request):
-        self.update()
+        update_functions()
         return super(FunctionAdmin, self).get_queryset(request)
 
     def has_add_permission(self, request):
@@ -66,28 +89,6 @@ class FunctionAdmin(admin.ModelAdmin):
 
     def has_change_permission(self, request, obj=None):
         return True
-
-    def update(self):
-        from django.conf import settings
-
-        for pi, f in settings.PROJECT.settings.functions.items():
-            fentry = models.Function.objects.filter(name=pi)
-            if len(fentry) > 1:
-                print('More than one function registered for %s' % pi)
-            fentry = fentry.last()
-            if fentry is None:
-                fo = models.Function(name=pi, kwargs=(f.kwargs is not None),
-                                     doc=f.doc)
-                fo.save()
-                # add arguments
-                args = [dict(name=n, function=fo)
-                        for n in f.positional_arguments]
-                args += [dict(name=n, value='%r' % d, function=fo)
-                         for n, d in zip(f.optional_arguments, f.defaults)]
-                # insert
-                for a in args:
-                    models.Argument(**a).save()
-        return
 
     def signiture(self, obj):
         sign = ['%s=%s' % (p.name, p.value) for p in obj.argument_set.all()]
