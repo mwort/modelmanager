@@ -1,3 +1,6 @@
+# -*- coding: utf-8 -*-
+from __future__ import unicode_literals
+
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 from django.templatetags.static import static
@@ -7,10 +10,11 @@ from . import models
 
 
 def function(obj):
-    change_url = reverse('admin:api_function_change', args=(obj.pk,))
+    change_url = reverse('admin:api_function_change',
+                         args=(admin.utils.quote(obj.pk),))
     is_configured = obj.is_configured()
     if is_configured:
-        ln = u'<a name="{i}" href="#" action="call">{n}</a>'
+        ln = '<a name="{i}" href="#" action="call">{n}</a>'
     else:
         ln = '<a href="{cu}">{n}</a>'
     elm = ln.format(i=obj.pk, cu=change_url, n=obj.name)
@@ -18,7 +22,8 @@ def function(obj):
 
 
 def configured(obj):
-    change_url = reverse('admin:api_function_change', args=(obj.pk,))
+    change_url = reverse('admin:api_function_change',
+                         args=(admin.utils.quote(obj.pk),))
     ny = 'yes' if obj.is_configured() else 'no'
     imgurl = static('admin/img/icon-%s.svg' % ny)
     sln = '&ensp;<a href="{cu}"><img src="{iu}" alt="True"></a>'

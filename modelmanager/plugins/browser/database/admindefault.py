@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 """
 The global Django admin browser configuration.
 """
+from __future__ import unicode_literals
 import csv
 import os.path as osp
 
