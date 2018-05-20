@@ -7,6 +7,7 @@ from django.http import HttpResponse
 
 from modelmanager.settings import FunctionInfo
 from .models import Function
+from browser.models import Run
 
 IMGEXT = ['.jpg', '.png', '.gif', '.svg', '.bmp']
 IMGTAG = '<img src="{0}" alt="{0}">'
@@ -21,12 +22,30 @@ RESULTFILTERS = []
 ARGUMENTSCOPE = {'project': settings.PROJECT}
 
 
-def function_call(request, pk):
+def call_run_function(request, rid, fpk):
+    run = Run.objects.get(pk=rid)
+    fobj = Function.objects.get(pk=fpk)
+    if run and fobj:
+        try:
+            function = run
+            for comp in fpk.split('.'):
+                function = getattr(function, comp)
+        except AttributeError:
+            return HttpResponse(u'%s not found in %s.' % (fpk, run))
+        return call_function(fobj, function)
+    return HttpResponse(u'Function %s or Run %s not found.' % (fpk, run))
+
+
+def call_project_function(request, pk):
+    fobj = Function.objects.get(pk=pk)
+    function = settings.PROJECT.settings[fobj.name]
+    return call_function(fobj, function)
+
+
+def call_function(fobj, function):
     """
     Handle a project or plugin function call and return output/errors as html.
     """
-    fobj = Function.objects.get(pk=pk)
-    function = settings.PROJECT.settings[fobj.name]
     # evaluate arguments
     arguments, notset, evalerror = convert_arguments(fobj.argument_set.all())
     errormsg = None

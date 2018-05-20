@@ -1,0 +1,70 @@
+{% extends "admin/change_form.html" %}
+{% load static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'style.css' %}" />
+<style media="screen">
+  #functions {
+    float: left;
+    width: 34%;
+    min-width: 400px;
+    display: inline-block;
+    padding-top: 20px;
+  }
+  #results {
+    float: right;
+    display: inline-block;
+    width: 64%;
+    min-width: 440px;
+    padding-top: 20px;
+  }
+</style>
+{% endblock %}
+
+{% block submit_buttons_bottom %}
+{{ block.super }}
+
+<div class="module">
+<h2>RUN FUNCTIONS ({{results|length}})</h2>
+
+{% if results %}
+<div id="functions" class="results">
+<table>
+<thead>
+<tr>
+<th scope="col"><div class="text"><span>Function</span></div></th>
+<th scope="col"><div class="text"><span>Configured</span></div></th>
+</tr>
+</thead>
+
+<tbody>
+{% for result in results %}
+<tr class="{% cycle 'row1' 'row2' %}">
+  {% for col in result %}<td>{{col}}</td>{% endfor %}
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+
+<div id='results' class='pre'></div>
+{% endif %}
+
+</div>
+
+{% endblock %}
+
+
+{% block admin_change_form_document_ready %}
+{{ block.super }}
+<script src="{% static 'api.js' %}" charset="utf-8"></script>
+<script type="text/javascript">
+
+django.jQuery("a[action='call']").click(function(e) {
+    e.preventDefault();
+    var id = django.jQuery(this).attr('name');
+    call_function('../function/'+id+'/call/', '#results');
+});
+</script>
+{% endblock %}

@@ -134,7 +134,8 @@ class ApiAdmin(BrowserProjectTestCase):
     urls = ['/api/',
             '/api/function/',
             '/api/setting/',
-            '/api/function/test_function/change/']
+            '/api/function/test_function/change/',
+            '/browser/run/1/function/test_function/call/']  # returns errmsg
 
     def check_url(self, url):
         print('Checking %s' % url)

@@ -9,6 +9,8 @@ from django.urls import reverse
 from django.http import HttpResponse
 from django.utils.safestring import mark_safe
 
+from ..api import admin as api_admin
+
 try:
     import StringIO as io
 except ImportError:
@@ -117,3 +119,17 @@ def related_model_link(field):
         return mark_safe(href.format(url, relmodel.pk))
     link_fk.short_description = field.name
     return link_fk
+
+
+class RunAdmin(DefaultModelAdmin):
+    """Admin that also shows file_interface functions."""
+
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        run = self.model.objects.get(id=object_id)
+        functions = run.get_file_interface_functions()
+        extra_context = extra_context or {}
+        res = [(api_admin.function(f), api_admin.configured(f))
+               for f in functions]
+        extra_context['results'] = res
+        return super(RunAdmin, self).change_view(
+            request, object_id, form_url, extra_context=extra_context)

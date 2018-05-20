@@ -4,25 +4,7 @@
 {% block extrastyle %}
   {{ block.super }}
   <link rel="stylesheet" href="{% static 'style.css' %}" />
-  <style media="screen">
-  /* split divs side by side */
-  #content-main {
-    width: 34%;
-    min-width: 400px;
-  }
-  #content-results {
-    float: right;
-    width: 64%;
-    min-width: 440px;
-  }
-  /* constrain looong function list */
-  #changelist-form .results {
-    max-height: 500px;
-  }
-  #searchbar {
-    width: 50%;
-  }
-  </style>
+  <link rel="stylesheet" href="{% static 'api/function_list.css' %}" />
 {% endblock %}
 
 

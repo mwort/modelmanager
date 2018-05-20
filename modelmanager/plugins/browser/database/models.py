@@ -9,16 +9,57 @@ from io import BytesIO
 from django.db import models
 from django.core.files.uploadedfile import InMemoryUploadedFile
 
+from ..api.models import Function
+from .admindefault import RunAdmin
+
 
 class Run(models.Model):
     class Meta:
         abstract = True
+
+    # custom admin
+    _admin = RunAdmin
+
+    # interface properties attached to run
+    # dict: {related_file_field: {name: property, ...}}
+    # properties should work on both run and project
+    file_interfaces = {}
+
+    # default fields
     time = models.DateTimeField('Time', auto_now_add=True)
     tags = models.CharField(max_length=1024, blank=True, null=True)
     notes = models.TextField('Notes', blank=True)
 
+    def __init__(self, *args, **kwargs):
+        super(Run, self).__init__(*args, **kwargs)
+        for related, interfaces in self.file_interfaces.items():
+            for n, intf in interfaces.items():
+                setattr(self.__class__, n, intf)
+        return
+
+    def __str__(self):
+        return u'%i' % self.pk
+
     def __unicode__(self):
-        return u'Run %i' % self.pk
+        return self.__str__()
+
+    def get_file_interface_functions(self):
+        """Get all Function objects that belong to any resultfile."""
+        fn = []
+        for related, interfaces in self.file_interfaces.items():
+            for rf in self._get_related_files(related):
+                for n in interfaces:
+                    if n in rf.tags or n in rf.file.name:
+                        qs = Function.objects.filter(name__startswith=n)
+                        fn.extend(list(qs))
+        return fn
+
+    def _get_related_files(self, related_name):
+        try:
+            allrelated = getattr(self, related_name).all()
+        except AttributeError:
+            raise AttributeError(related_name+'.all is not a Run attribute.')
+        return allrelated
 
 
 class RunTagged(models.Model):

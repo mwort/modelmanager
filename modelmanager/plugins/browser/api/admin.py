@@ -1,14 +1,34 @@
 from django.contrib import admin
 from django.utils.safestring import mark_safe
 from django.templatetags.static import static
+from django.urls import reverse
 
 from . import models
+
+
+def function(obj):
+    change_url = reverse('admin:api_function_change', args=(obj.pk,))
+    is_configured = obj.is_configured()
+    if is_configured:
+        ln = u'<a name="{i}" href="#" action="call">{n}</a>'
+    else:
+        ln = '<a href="{cu}">{n}</a>'
+    elm = ln.format(i=obj.pk, cu=change_url, n=obj.name)
+    return mark_safe(elm)
+
+
+def configured(obj):
+    change_url = reverse('admin:api_function_change', args=(obj.pk,))
+    ny = 'yes' if obj.is_configured() else 'no'
+    imgurl = static('admin/img/icon-%s.svg' % ny)
+    sln = '&ensp;<a href="{cu}"><img src="{iu}" alt="True"></a>'
+    return mark_safe(sln.format(cu=change_url, iu=imgurl))
 
 
 @admin.register(models.Function)
 class FunctionAdmin(admin.ModelAdmin):
     ordering = ['name']
-    list_display = ["function", "configured"]
+    list_display = [function, configured]
     readonly_fields = ['signiture', "description"]
     exclude = ['name', 'doc', 'kwargs']
     inlines = []  # defined as needed in self.get_form
@@ -68,22 +88,6 @@ class FunctionAdmin(admin.ModelAdmin):
                 for a in args:
                     models.Argument(**a).save()
         return
-
-    def function(self, obj):
-        callurl = '%s/change/' % obj.pk
-        is_configured = obj.is_configured()
-        if is_configured:
-            ln = u'<a name="{i}" href="#" action="call">{n}</a>'
-        else:
-            ln = '<a href="{url}">{n}</a>'
-        elm = ln.format(i=obj.pk, url=callurl, n=obj.name)
-        return mark_safe(elm)
-
-    def configured(self, obj):
-        ny = 'yes' if obj.is_configured() else 'no'
-        imgurl = static('admin/img/icon-%s.svg' % ny)
-        sln = '&ensp;<a href="{pk}/change/"><img src="{iu}" alt="True"></a>'
-        return mark_safe(sln.format(pk=obj.pk, iu=imgurl))
 
     def signiture(self, obj):
         sign = ['%s=%s' % (p.name, p.value) for p in obj.argument_set.all()]

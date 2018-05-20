@@ -1,0 +1,27 @@
+#container {
+  min-width: 0;
+}
+#content {
+  padding: 20px;
+}
+#results {
+  vertical-align: middle;
+  margin: 20px;
+}
+/* split divs side by side */
+#content-main {
+  width: 34%;
+  min-width: 400px;
+}
+#content-results {
+  float: right;
+  width: 64%;
+  min-width: 440px;
+}
+/* constrain looong function list */
+#changelist-form .results {
+  max-height: 500px;
+}
+#searchbar {
+  width: 50%;
+}
