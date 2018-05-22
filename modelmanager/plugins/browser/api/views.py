@@ -4,6 +4,7 @@ import os.path as osp
 
 from django.conf import settings
 from django.http import HttpResponse
+from django.contrib.admin.utils import unquote
 
 from modelmanager.settings import FunctionInfo
 from .models import Function
@@ -24,7 +25,7 @@ ARGUMENTSCOPE = {'project': settings.PROJECT}
 
 def call_run_function(request, rid, fpk):
     run = Run.objects.get(pk=rid)
-    fobj = Function.objects.get(pk=fpk)
+    fobj = Function.objects.get(pk=unquote(fpk))
     if run and fobj:
         try:
             function = run
@@ -37,7 +38,7 @@ def call_run_function(request, rid, fpk):
 
 
 def call_project_function(request, pk):
-    fobj = Function.objects.get(pk=pk)
+    fobj = Function.objects.get(pk=unquote(pk))
     function = settings.PROJECT.settings[fobj.name]
     return call_function(fobj, function)
 
