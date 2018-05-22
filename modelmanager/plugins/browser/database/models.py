@@ -38,7 +38,7 @@ class Run(models.Model):
         return
 
     def __str__(self):
-        return u'%i' % self.pk
+        return u'%s %i' % (self.__class__.__name__, self.pk)
 
     def __unicode__(self):
         return self.__str__()
