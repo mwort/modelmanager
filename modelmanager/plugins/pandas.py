@@ -28,6 +28,8 @@ class ProjectOrRunData(pd.DataFrame):
             self.read = self.from_project
         # instantiated with run
         elif hasattr(projectorrun, 'resultfiles'):
+            from django.conf import settings
+            self.project = settings.PROJECT
             self.run = projectorrun
             self.path = self.find_resultfile()
             self.read = self.from_run
