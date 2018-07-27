@@ -10,12 +10,13 @@ import modelmanager as mm
 
 TEST_SETTINGS = """
 import os
-from inspect import cleandoc as _cleandoc
 from modelmanager import utils
+from modelmanager.settings import parse_settings as _parse_settings
 
 test_variable = 123
 test_relpath = 'mm/settings.py'
 
+@_parse_settings
 def test_function(project, d=1, edit=False):
     dd = d + 1
     return dd
@@ -24,13 +25,14 @@ class TestPlugin:
     test_plugin_variable = 456
 
     def __init__(self, project):
-        self._project = project
+        self.project = project
         self.test_project_variable = project.test_variable
         return
 
-    def test_method(self, testarg):
-        self._project.test_variable
-        return testarg
+    @_parse_settings
+    def test_method(self, testarg, setting=None):
+        self.project.test_variable
+        return testarg + (setting or 0)
 
 @property
 def test_property(project):
@@ -165,6 +167,16 @@ class Settings(ProjectTestCase):
         self.settings(test_session_variable=2)
         func = self.settings.functions['testplugin.test_method']
         self.assertEqual(func.positional_arguments, ['testarg'])
+
+    def test_parse_settings(self):
+        # simple function
+        self.assertEqual(self.project.test_function(), 2)
+        self.project.settings(test_function_d=0)
+        self.assertEqual(self.project.test_function(), 1)
+        # plugin.method
+        self.assertEqual(self.project.testplugin.test_method(1, setting=1), 2)
+        self.project.settings(testplugin_test_method_setting=1)
+        self.assertEqual(self.project.testplugin.test_method(1), 2)
 
 
 class CommandlineInterface(ProjectTestCase):

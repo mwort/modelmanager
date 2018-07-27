@@ -21,8 +21,8 @@ class Clones(unittest.TestCase):
 
     def setUp(self):
         self.project = create_project(self.projectdir, TEST_SETTINGS)
-        self.clonesdir = self.project.clonesdir
-        self.assertTrue(osp.exists(self.clonesdir))
+        self.clone_dir = self.project.clone_dir
+        self.assertTrue(osp.exists(self.clone_dir))
         # create some dirs + files
         os.mkdir(self.pd('input'))
         os.mkdir(self.pd('output'))
@@ -36,7 +36,7 @@ class Clones(unittest.TestCase):
         return osp.join(self.projectdir, *args)
 
     def cd(self, *args):
-        return osp.join(self.clonesdir, *args)
+        return osp.join(self.clone_dir, *args)
 
     def tearDown(self):
         shutil.rmtree(self.projectdir)
@@ -64,15 +64,15 @@ class Clones(unittest.TestCase):
         clone.clone('testclone2', verbose=self.verbose)
         self.assertTrue(osp.exists(self.cd('testclone2')))
 
-    def test_cloneignore(self):
-        self.project.settings(cloneignore=['output/*'])
+    def test_clone_ignore(self):
+        self.project.settings(clone_ignore=['output/*'])
         self.project.clone('testclone', verbose=self.verbose)
         self.assertFalse(osp.exists(self.cd('testclone/output/out.txt')))
         self.assertTrue(osp.exists(self.cd('testclone/output')))
 
-    def test_clonelinks(self):
+    def test_clone_links(self):
         lns = ['input/params.txt', 'output']
-        self.project.settings(clonelinks=lns)
+        self.project.settings(clone_links=lns)
         self.project.clone('testclone', verbose=self.verbose)
         for l in lns:
             self.assertTrue(osp.islink(self.cd('testclone', l)))

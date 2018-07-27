@@ -12,6 +12,7 @@ import inspect
 import types
 import traceback
 import re
+import functools
 
 from modelmanager import utils
 
@@ -341,3 +342,56 @@ def sort_settings(settings):
         else:
             r["variables"][name] = obj
     return r
+
+
+def parse_settings(function):
+    """A decorator to parse project settings to a project or plugin method.
+
+    ```
+    @parse_settings
+    def method(self, arg=None):
+        return
+    ```
+    If the method is called without the `arg=` argument and the `self.project`
+    has a `method_arg` setting, the value will be parsed.
+    """
+    finfo = FunctionInfo(function)
+    iscall = finfo.name == '__call__'
+
+    @functools.wraps(function)
+    def f(*args, **kwargs):
+        # get project instance
+        from .project import Project
+        inst = args[0]  # assumes method
+        if isinstance(inst, Project) or Project in inst.__class__.__bases__:
+            prefix = ''
+            project = inst
+        elif hasattr(inst, 'project'):
+            project = inst.project
+            prefix = inst.__class__.__name__.lower() + '_'
+        else:
+            em = ('%s is not a Project instance or doesnt have a project '
+                  'attribute.')
+            raise AttributeError(em % inst)
+        # get settings
+        for a in finfo.optional_arguments:
+            setname = prefix + ('' if iscall else finfo.name+'_') + a
+            if a not in kwargs and hasattr(project, setname):
+                kwargs[a] = getattr(project, setname)
+        # call function
+        return function(*args, **kwargs)
+    # add signiture to beginning of docstrign if PY2
+    if sys.version_info < (3, 0):
+        sig = '%s(%s)\n' % (finfo.name, finfo.signiture)
+        f.__doc__ = sig + finfo.doc
+    # add generic docs
+    add_docs = """
+Settings
+--------
+All keyword arguements: `%s_<kwarg> = value`"
+"""
+    add_docs = add_docs % ('<plugin>_' if iscall else '[<plugin>_]<method>')
+    function.__doc__ = (finfo.doc or '') + add_docs
+    # attach original function
+    f.decorated_function = function
+    return f
