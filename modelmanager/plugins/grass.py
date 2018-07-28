@@ -149,7 +149,9 @@ class GrassAttributeTable(DataFrame):
     key = None
     #: dictionary of dictionary-like data or names project setting of those
     #: data must have the same keys as table
-    add_attributes = {}
+    add_attributes = None
+    #: list, optional subset of columns to read, writing reads+writes full tbl
+    subset_columns = None
     #: optional if it shouldnt call grass to find out
     database = None
     #: optional if it shouldnt call grass to find out
@@ -170,18 +172,21 @@ class GrassAttributeTable(DataFrame):
         self.key = self.key or 'cat'
         # fill dataframe
         self.read()
-        # append dictionary-like data
-        if self.add_attributes:
-            self.append_attributes(self.add_attributes)
         return
 
     def read(self):
         """Read table from db."""
+        sc = self.subset_columns
+        cols = ','.join(sc if self.key in sc else [self.key]+sc) if sc else '*'
         with self.dbconnection as con:
-            tbl = pd.read_sql('select * from %s;' % self.table, con)
+            tbl = pd.read_sql('select %s from %s;' % (cols, self.table), con)
         tbl.set_index(self.key, inplace=True, verify_integrity=True)
         # fill DataFrame
         super(GrassAttributeTable, self).__init__(tbl)
+        # append dictionary-like data
+        if self.add_attributes:
+            assert type(self.add_attributes) == dict
+            self.append_attributes(self.add_attributes)
         return
 
     @property
@@ -200,8 +205,14 @@ class GrassAttributeTable(DataFrame):
     def write(self):
         """Save table back to GRASS sqlite3 database.
         """
-        cleantbl = self.drop(self.add_attributes.keys(), axis=1)
+        dropcols = self.add_attributes.keys() if self.add_attributes else []
+        cleantbl = self.drop(dropcols, axis=1)
         with self.dbconnection as con:
+            if self.subset_columns:  # read other columns
+                tbl = pd.read_sql('select * from %s;' % self.table, con)
+                tbl.set_index(self.key, inplace=True, verify_integrity=True)
+                tbl[cleantbl.columns] = cleantbl
+                cleantbl = tbl
             cleantbl.to_sql(self.table, con, if_exists='replace')
         return
 

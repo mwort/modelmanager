@@ -62,6 +62,22 @@ class TestGrass(unittest.TestCase):
         self.project.testgrasstbl.read()
         self.assertEqual(self.project.testgrasstbl['new'].mean(), 1000)
 
+    @skip_if_py3
+    def test_subset_attribute_table(self):
+        class TestGrassSubsetTbl(TestGrassTbl):
+            subset_columns = ['int_2', 'str_1']
+            add_attributes = None
+        # read
+        self.project.settings(TestGrassSubsetTbl)
+        self.assertTrue(hasattr(self.project, 'testgrasssubsettbl'))
+        cols = list(self.project.testgrasssubsettbl.columns)
+        self.assertEqual(cols, TestGrassSubsetTbl.subset_columns)
+        # write
+        self.project.testgrasssubsettbl['int_2'] = [9, 9]
+        self.project.testgrasssubsettbl.write()
+        self.project.testgrasssubsettbl.read()
+        self.assertEqual(sum(self.project.testgrasssubsettbl['int_2']), 18)
+
     @classmethod
     def tearDownClass(self):
         shutil.rmtree(self.projectdir)
