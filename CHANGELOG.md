@@ -1,6 +1,14 @@
 # CHANGE LOG
 
 
+## v0.3 (2018-08-01)
+* first release on PyPI (PyPI name changed to model-manager)
+* added *grass* plugin
+* added *pandas* plugin
+* *browser API* debugged and improved
+* many smaller improvements
+
+
 ## v0.2 (2018-02-09)
 * implement call function (and view settings) API for the browser plugin
 * all browser tables/models are defined in the browser resources models.py, all
