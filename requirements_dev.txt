@@ -2,9 +2,8 @@
 ipython
 sphinx
 sphinx_rtd_theme
-nose
 coverage
-pypi-publisher
+twine
 
 # modelmanager plugin dependencies
 django==1.11.11

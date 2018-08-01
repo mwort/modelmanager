@@ -8,7 +8,7 @@ setup:
 	virtualenv env
 	source env/bin/activate
 	pip install -r requirements_dev.txt
-	python setup.py develop
+	pip install -e .
 
 
 clean:
@@ -26,9 +26,9 @@ version:
 	git tag $$new
 
 release:
-	# not working yet
 	python setup.py sdist
 	git push --tags
+	twine upload dist/*
 
 # working dir should be clean (git)
 update_docs:
