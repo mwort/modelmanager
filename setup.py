@@ -17,7 +17,7 @@ with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(
-    name='modelmanager',
+    name='model-manager',
     version=__version__,
     description='A python package to manage your (scientific) model runs, input and output.',
     long_description=long_description,
