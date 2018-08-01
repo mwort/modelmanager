@@ -6,6 +6,12 @@ import traceback
 import pprint
 import sys
 
+# optional argcomplete support
+try:
+    import argcomplete
+except ImportError:
+    argcomplete = False
+
 from modelmanager.settings import FunctionInfo
 
 
@@ -60,6 +66,8 @@ class CommandlineInterface(object):
         self.parsed_namespace = None
         self.varargs = []
         self.kwargs = {}
+        if argcomplete:
+            argcomplete.autocomplete(self.mainparser)
         return
 
     def parse_args(self, argslist=None):
