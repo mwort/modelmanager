@@ -143,7 +143,7 @@ class BrowserSettings(object):
         self.filesdir = osp.join(self.browser.resourcedir, self.filesdirname)
         self.tmpfilesdir = osp.join(self.filesdir, self.tmpfilesdirname)
         if not osp.exists(self.tmpfilesdir):
-            os.mkdir(self.tmpfilesdir)
+            os.makedirs(self.tmpfilesdir)
         # Project-specific Django settings
         self.django_settings = {
             "BASE_DIR": self.project.resourcedir,

@@ -1,24 +1,20 @@
 from setuptools import setup, find_packages
 from codecs import open
-from os import path
+import os
+
 import modelmanager
+
+
+def package_files(dir):
+    return [os.path.join(p, f) for (p, d, n) in os.walk(dir) for f in n]
+
 
 __version__ = modelmanager.__version__
 
-here = path.abspath(path.dirname(__file__))
-
 # Get the long description from the README file
-with open(path.join(here, 'README.md'), encoding='utf-8') as f:
+here = os.path.abspath(os.path.dirname(__file__))
+with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
-
-# get the dependencies and installs
-with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
-    all_reqs = f.read().split('\n')
-
-install_requires = [x.strip() for x in all_reqs
-                    if 'git+' not in x and not x.startswith('#')]
-dependency_links = [x.strip().replace('git+', '') for x in all_reqs
-                    if x.startswith('git+')]
 
 setup(
     name='modelmanager',
@@ -35,10 +31,9 @@ setup(
     ],
     keywords='',
     packages=find_packages(exclude=['docs', 'tests*']),
+    data_files=package_files('modelmanager/resources'),
     scripts=['modelmanager/scripts/modelmanager', 'modelmanager/scripts/mm'],
     include_package_data=True,
     author='Michel Wortmann',
-    install_requires=install_requires,
-    dependency_links=dependency_links,
     author_email='wortmann@pik-potsdam.de'
 )
