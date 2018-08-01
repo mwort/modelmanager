@@ -40,7 +40,8 @@ class CommandlineInterface(object):
         mpargs = dict(description=description or project.__doc__,
                       formatter_class=RawTextHelpFormatter)
         self.mainparser = argparse.ArgumentParser(**mpargs)
-        self.mainsubparser = self.mainparser.add_subparsers()
+        self.mainsubparser = self.mainparser.add_subparsers(
+                                                        metavar='<command>')
 
         # create plugin subparsers
         pisubparsers = {}
@@ -139,7 +140,7 @@ class CommandlineInterface(object):
         piparser = mainparser.add_parser(name, help=helpstr,
                                          description=piclass.__doc__,
                                          formatter_class=RawTextHelpFormatter)
-        pisubparser = piparser.add_subparsers()
+        pisubparser = piparser.add_subparsers(metavar='<command>')
         # this only works and is needed in PY3
         pisubparser.required = True
         return pisubparser
