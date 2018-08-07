@@ -45,12 +45,17 @@ class Clone(object):
                     for n in sorted(names) if osp.isdir(n)]
         return namesdir
 
-    def load_clone(self, name):
+    def load_clone(self, name, **settings):
         # clone settings (non-persistent)
         kwargs = {'cloned': True,
                   'cloneparent': self.project,
                   'clonename': name}
-        return ClonedProject(self._get_path_by_name(name), **kwargs)
+        settings.update(kwargs)
+
+        # dynamically inheriting project class
+        class ClonedProject(self.project.__class__, ClonedProjectMixin):
+            pass
+        return ClonedProject(self._get_path_by_name(name), **settings)
 
     def __getitem__(self, key):
         """
@@ -60,7 +65,7 @@ class Clone(object):
 
     @parse_settings
     def __call__(self, name, fresh=False, linked=True, verbose=False,
-                 dir=None, links=[], ignore=[]):
+                 dir=None, links=[], ignore=[], **settings):
         '''
         Clone the project by creating a dir in project.clone_dir.
 
@@ -80,6 +85,8 @@ class Clone(object):
             List of path patterns to create links to rather than copy.
         ignore : iterable
             List of path patterns to ignore when cloning.
+        settings : <any keyword>
+            Settings passed on to the clone project instance.
 
         Returns
         -------
@@ -115,15 +122,17 @@ class Clone(object):
             else:
                 print('Clone %s already exists, will try to load it.'
                       % cprodir)
-                return self.load_clone(name)
+                return self.load_clone(name, **settings)
 
         # copy
         utils.copy_resources(prodir, cprodir, ignorepatterns=ignore,
                              linkpatterns=links, verbose=verbose)
 
         # return loaded project
-        return self.load_clone(name)
+        return self.load_clone(name, **settings)
 
 
-class ClonedProject(Project):
+class ClonedProjectMixin(object):
+    """Mix-in for ClonedProject dynamically inheriting in Clone.load_clone.
+    """
     pass
