@@ -12,8 +12,10 @@ def load_module_path(path, name=None):
     name = name if name else osp.splitext(osp.basename(path))[0]
     # remove byte versions
     for f in [path+'c', path+'o']:
-        if osp.exists(f):
+        try:
             os.remove(f)
+        except OSError:
+            pass
     if sys.version_info < (3,):
         import imp
         m = imp.load_source(name, path)
