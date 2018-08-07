@@ -156,6 +156,8 @@ class GrassAttributeTable(DataFrame):
     database = None
     #: optional if it shouldnt call grass to find out
     table = None
+    #: needed to stop exposing all pd.DataFrame methods
+    plugin = []
 
     def __init__(self, project, **override):
         super(GrassAttributeTable, self).__init__()
