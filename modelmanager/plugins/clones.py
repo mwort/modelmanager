@@ -6,7 +6,6 @@ import os.path as osp
 import shutil
 from glob import glob
 
-from modelmanager import Project
 from modelmanager.project import ProjectDoesNotExist
 from modelmanager import utils
 from modelmanager.settings import parse_settings
@@ -135,4 +134,7 @@ class Clone(object):
 class ClonedProjectMixin(object):
     """Mix-in for ClonedProject dynamically inheriting in Clone.load_clone.
     """
-    pass
+    def remove(self):
+        """Remove the clone directory."""
+        shutil.rmtree(self.projectdir)
+        return

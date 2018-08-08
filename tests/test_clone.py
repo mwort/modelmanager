@@ -88,6 +88,12 @@ class Clones(unittest.TestCase):
         clone.clone('testclone', verbose=self.verbose)
         self.assertTrue(osp.exists(self.cd('testclone/mm/clones/testclone')))
 
+    def test_remove(self):
+        clone = self.project.clone('testclone')
+        self.assertTrue(osp.isdir(self.cd('testclone')))
+        clone.remove()
+        self.assertFalse(osp.exists(self.cd('testclone')))
+
 
 if __name__ == '__main__':
     cProfile.run('unittest.main()', 'pstats')
