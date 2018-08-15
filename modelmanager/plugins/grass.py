@@ -162,11 +162,11 @@ class GrassAttributeTable(DataFrame):
     def __init__(self, project, **override):
         super(GrassAttributeTable, self).__init__()
         self.__dict__.update(override)
-        self._project = project
+        self.project = project
         em = 'vector or (database and table) class attributes needed.'
         assert self.vector or (self.database and self.table), em
         if not (self.database and self.table):
-            with GrassSession(self._project) as grass:
+            with GrassSession(self.project) as grass:
                 tblcon = grass.vector_db(self.vector)[self.layer]
             self.database = tblcon['database']
             self.table = tblcon['table']
@@ -200,7 +200,7 @@ class GrassAttributeTable(DataFrame):
         assert type(appenddict) == dict, em
         for k, v in appenddict.items():
             if type(v) == str:
-                v = self._project._attribute_or_function_result(v)
+                v = self.project._attribute_or_function_result(v)
             self.loc[:, k] = pd.Series(v)
         return
 
