@@ -42,10 +42,12 @@ class GrassSession(object):
         Grass mapset where to write to.
     grassbin : str, optional (default=grass)
         Name or path of the grass executable.
+    grass_overwrite : bool, optional
+        Always overwrite maps.
     """
 
     def __init__(self, project_or_gisdb, location=None, mapset=None,
-                 grassbin='grass'):
+                 overwrite=None, verbose=None, grassbin='grass'):
         if type(project_or_gisdb) is not str:
             self.project = project_or_gisdb
             project_or_gisdb = self.project.grass_db
@@ -53,6 +55,8 @@ class GrassSession(object):
             mapset = mapset or self.project.grass_mapset
             if hasattr(self.project, "grassbin"):
                 grassbin = self.project.grassbin
+            if hasattr(self.project, "grass_overwrite") and overwrite is None:
+                overwrite = self.project.grass_overwrite
         gisdb = project_or_gisdb
         # if gisdb is path to mapset
         assert osp.exists(gisdb), 'gisdb doesnt exist: %s' % gisdb
@@ -80,6 +84,8 @@ class GrassSession(object):
         userdir = osp.expanduser("~")
         self.addonpath = osp.join(userdir, '.grass7', 'addons', 'scripts')
         self.python_package = os.path.join(self.gisbase, "etc", "python")
+
+        self.overwrite = GrassOverwrite(overwrite, verbose=verbose)
         return
 
     def _which(self, program):
@@ -112,6 +118,7 @@ class GrassSession(object):
         if self.mapset != 'PERMANENT':
             grass.run_command('g.mapset', mapset=self.mapset, flags='c',
                               quiet=True)
+        self.overwrite.__enter__()
         return grass
 
     def __enter__(self):
@@ -129,11 +136,54 @@ class GrassSession(object):
         rmpaths = [self.addonpath]
         paths = os.environ['PATH'].split(ps)
         os.environ['PATH'] = ps.join([p for p in paths if p not in rmpaths])
+        self.overwrite.__exit__()
         return
 
     def __exit__(self, *args):
         self.clean()
         return
+
+
+class GrassOverwrite(object):
+    """Context processor to overwrite GRASS mapsself."""
+    OVERWRITE = 'GRASS_OVERWRITE'
+    VERBOSE = "GRASS_VERBOSE"
+
+    def __init__(self, overwrite=True, verbose=None):
+        """
+        Arguments
+        ---------
+        overwrite : bool
+            Convenience argument to avoid putting the context in if block.
+        verbose : bool | int(-1 ... 3), optional
+            Optional verbosity setting in the context.
+        """
+        self.overwrite = bool(overwrite)
+        self.verbose = int(verbose) if verbose is not None else None
+        return
+
+    def __enter__(self):
+        GO = self.OVERWRITE
+        self.is_set = GO in os.environ and os.environ[GO] != '0'
+        self.verbose_is_set = self.VERBOSE in os.environ
+        if self.overwrite:
+            os.environ[GO] = '1'
+        if self.verbose is not None and not self.verbose_is_set:
+                os.environ[self.VERBOSE] = str(self.verbose)
+        return
+
+    def __exit__(self, *args):
+        if not self.is_set and self.overwrite:
+            os.environ.pop(self.OVERWRITE)
+        if not self.verbose_is_set and self.verbose is not None:
+            os.environ.pop(self.VERBOSE)
+        return
+
+    def __bool__(self):
+        return self.overwrite
+
+    def __nonzero__(self):
+        return self.overwrite
 
 
 class GrassAttributeTable(DataFrame):
@@ -257,26 +307,15 @@ class GrassModulePlugin(object):
                 elif p.required:
                     em = p.name + ' argument is required by ' + self.module
                     raise AttributeError(em)
-            if not verbose:
-                args['stderr_'] = subprocess.PIPE
-                args['stdout_'] = subprocess.PIPE
             # run module
-            module(**args).run()
-            if not verbose:
-                for l in module.outputs.stderr.split('\n'):
-                    if 'ERROR' in l or 'WARNING' in l:
-                        print(l)
+            module(quiet=not verbose, **args).run()
         return
 
     def update(self, **modulekwargs):
         """Run create and postprocess with GRASS_OVERWRITE."""
-        GO = 'GRASS_OVERWRITE'
-        is_set = GO in os.environ and os.environ[GO] != '0'
-        os.environ[GO] = '1'
-        self.create(**modulekwargs)
-        self.postprocess(**modulekwargs)
-        if not is_set:
-            os.environ.pop(GO)
+        with GrassOverwrite():
+            self.create(**modulekwargs)
+            self.postprocess(**modulekwargs)
         return
 
     def __call__(self, **modulekwargs):

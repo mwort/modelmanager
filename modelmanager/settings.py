@@ -386,6 +386,7 @@ def parse_settings(function):
         f.__doc__ = sig + finfo.doc
     # add generic docs
     add_docs = """
+
 Settings
 --------
 All keyword arguements: `%s_<kwarg> = value`"
