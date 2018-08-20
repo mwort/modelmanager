@@ -13,7 +13,7 @@ class ProjectOrRunData(pd.DataFrame):
     """
     A representation of data read from either the SWIM project or Run instance.
     """
-    swim_path = None
+    path = None
     plugin = []
 
     def __init__(self, projectorrun):
@@ -24,7 +24,7 @@ class ProjectOrRunData(pd.DataFrame):
         # instantiated with project
         if isinstance(projectorrun, Project):
             self.project = projectorrun
-            self.path = osp.join(self.project.projectdir, self.swim_path)
+            self.path = osp.join(self.project.projectdir, self.path)
             self.read = self.from_project
         # instantiated with run
         elif hasattr(projectorrun, 'resultfiles'):
