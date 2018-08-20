@@ -111,7 +111,7 @@ class ReadWriteDataFrame(pd.DataFrame):
     path = None
     plugin = []
 
-    def __init__(self, project, oninit='read', **kwargs):
+    def __init__(self, project, read=True, **kwargs):
         # init DataFrame
         pd.DataFrame.__init__(self)
         self.name = self.__class__.__name__
@@ -119,8 +119,8 @@ class ReadWriteDataFrame(pd.DataFrame):
         self.path = osp.join(self.project.projectdir, self.path)
         errmsg = self.name + 'file does not exist: ' + self.path
         assert osp.exists(self.path), errmsg
-        if oninit:
-            getattr(self, oninit)(**kwargs)
+        if read:
+            pd.DataFrame.__init__(self, self.read(**kwargs))
         return
 
     def __call__(self, data=None, **set):
@@ -157,8 +157,7 @@ class ReadWriteDataFrame(pd.DataFrame):
 
     def read(self, **kwargs):
         """
-        Override me and reinitialise the data by calling:
-            pd.DataFrame.__init__(self, data)
+        Override me and return pd.DataFrame.
         """
         raise NotImplementedError('Reading of %s not implemented.' % self.name)
 
