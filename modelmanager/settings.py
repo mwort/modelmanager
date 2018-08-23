@@ -36,7 +36,7 @@ class SettingsManager(object):
         self.register_plugin(project.__class__, '')
         return
 
-    def load(self, **override_settings):
+    def load(self, defaults={}, **override_settings):
         """
         (Re)load and override project settings.
 
@@ -50,6 +50,10 @@ class SettingsManager(object):
         override_settings["resourcedir"] = osp.dirname(self.file)
         settings = load_settings(self.file)
         settings.update(override_settings)
+        # set defaults
+        for k, v in defaults.items():
+            settings.setdefault(k, v)
+        # assign settings to project
         self(**settings)
         return
 
