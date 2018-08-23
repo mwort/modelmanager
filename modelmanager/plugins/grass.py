@@ -271,10 +271,12 @@ class GrassAttributeTable(DataFrame):
 
 class GrassModulePlugin(object):
     """A representation of a grass module that takes arguments from either
-    project settings or its own attributes.
+    project settings specified by ``argument_setting`` or its own attributes.
     """
-
+    #: Name of module
     module = None
+    #: name of dictionary project setting to look for default arguments
+    argument_setting = None
 
     def __init__(self, project):
         self.project = project
@@ -294,16 +296,23 @@ class GrassModulePlugin(object):
             Override any arguments of the module alredy set in settings.
         """
         args = {}
+        aset = self.argument_setting
+        if aset and hasattr(self.project, aset):
+            arg_setting = getattr(self.project, aset)
+            arg_setting = arg_setting if type(arg_setting) == dict else {}
+        else:
+            arg_setting = {}
+
         with GrassSession(self.project):
             from grass.pygrass.modules import Module
             module = Module(self.module, run_=False)
             for p in module.params_list:
                 if p.name in moduleargs:
                     args[p.name] = moduleargs[p.name]
+                elif p.name in arg_setting:
+                    args[p.name] = arg_setting[p.name]
                 elif hasattr(self, p.name):
                     args[p.name] = getattr(self, p.name)
-                elif hasattr(self.project, p.name):
-                    args[p.name] = getattr(self.project, p.name)
                 elif p.required:
                     em = p.name + ' argument is required by ' + self.module
                     raise AttributeError(em)
