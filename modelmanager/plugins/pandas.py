@@ -117,7 +117,7 @@ class ReadWriteDataFrame(pd.DataFrame):
         self.name = self.__class__.__name__
         self.project = project
         self.path = osp.join(self.project.projectdir, self.path)
-        errmsg = self.name + 'file does not exist: ' + self.path
+        errmsg = self.name + ' file does not exist: ' + self.path
         assert osp.exists(self.path), errmsg
         if read:
             pd.DataFrame.__init__(self, self.read(**kwargs))
