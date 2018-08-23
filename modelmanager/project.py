@@ -39,7 +39,12 @@ class Project(object):
         """
         Fall-back if requested setting isnt defined.
         """
-        raise SettingsUndefinedError(attr)
+        # make sure AttributeErrors from properties are not misinterpretet
+        if attr in self.__dict__ or attr in self.__class__.__dict__:
+            msg = 'While getting %s, an AttributeError occurred.' % attr
+            raise AttributeError(msg)
+        else:
+            raise SettingsUndefinedError(attr)
 
 
 def setup(projectdir='.', resourcedir='mm'):
