@@ -16,6 +16,11 @@ def load_module_path(path, name=None):
             os.remove(f)
         except OSError:
             pass
+    # remove module references
+    try:
+        del sys.modules[name]
+    except KeyError:
+        pass
     if sys.version_info < (3,):
         import imp
         m = imp.load_source(name, path)
