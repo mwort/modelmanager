@@ -129,7 +129,11 @@ class GrassSession(object):
         env = self.grass.gisenv()
         lf = osp.join(env['GISDBASE'], env['LOCATION_NAME'], env['MAPSET'],
                       '.gislock')
-        [os.remove(f) for f in [lf, self.rcfile] if osp.exists(lf)]
+        for f in [lf, self.rcfile]:
+            try:
+                os.remove(f)
+            except OSError:
+                pass
         # clean envs
         sys.path = [p for p in sys.path if p is not self.python_package]
         ps = os.pathsep
