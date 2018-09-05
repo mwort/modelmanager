@@ -199,7 +199,7 @@ class GrassAttributeTable(DataFrame):
     vector = None
     #: Optional
     layer = 1
-    #: Specify a different key index, default is same as grass table or 'cat'
+    #: Specify a different key index, default is the first column
     key = None
     #: dictionary of dictionary-like data or names project setting of those
     #: data must have the same keys as table
@@ -217,15 +217,15 @@ class GrassAttributeTable(DataFrame):
         super(GrassAttributeTable, self).__init__()
         self.__dict__.update(override)
         self.project = project
-        em = 'vector or (database and table) class attributes needed.'
-        assert self.vector or (self.database and self.table), em
-        if not (self.database and self.table):
-            with GrassSession(self.project) as grass:
-                tblcon = grass.vector_db(self.vector)[self.layer]
-            self.database = tblcon['database']
-            self.table = tblcon['table']
-            self.key = self.key or tblcon['key']
-        self.key = self.key or 'cat'
+        em = 'vector class attributes needed (others are optional).'
+        assert self.vector, em
+        nms = self.vector.split('@')
+        self.mapset = nms[1] if len(nms) > 1 else project.grass_mapset
+        self.table = self.table or nms[0]
+        dfdb = osp.join(project.grass_db, project.grass_location, self.mapset,
+                        'sqlite', 'sqlite.db')
+        self.database = self.database or dfdb
+        self.key = self.key or 0
         # fill dataframe
         self.read()
         return
@@ -236,12 +236,12 @@ class GrassAttributeTable(DataFrame):
         cols = ','.join(sc if self.key in sc else [self.key]+sc) if sc else '*'
         with self.dbconnection as con:
             tbl = pd.read_sql('select %s from %s;' % (cols, self.table), con)
+        self.key = tbl.columns[self.key] if type(self.key) == int else self.key
         tbl.set_index(self.key, inplace=True, verify_integrity=True)
         # fill DataFrame
         super(GrassAttributeTable, self).__init__(tbl)
         # append dictionary-like data
         if self.add_attributes:
-            assert type(self.add_attributes) == dict
             self.append_attributes(self.add_attributes)
         return
 
@@ -250,8 +250,8 @@ class GrassAttributeTable(DataFrame):
         return sqlite3.connect(self.database)
 
     def append_attributes(self, appenddict):
-        em = 'append attribute must be a dictionary. %r' % appenddict
-        assert type(appenddict) == dict, em
+        em = 'append attribute must be dictionary-like. %r' % appenddict
+        assert hasattr(appenddict, 'items'), em
         for k, v in appenddict.items():
             if type(v) == str:
                 v = self.project._attribute_or_function_result(v)
