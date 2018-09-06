@@ -233,7 +233,7 @@ class GrassAttributeTable(DataFrame):
     def read(self):
         """Read table from db."""
         sc = self.subset_columns
-        cols = ','.join(sc if self.key in sc else [self.key]+sc) if sc else '*'
+        cols = ','.join(sc) if sc else '*'
         with self.dbconnection as con:
             tbl = pd.read_sql('select %s from %s;' % (cols, self.table), con)
         self.key = tbl.columns[self.key] if type(self.key) == int else self.key

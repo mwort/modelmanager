@@ -52,7 +52,6 @@ class TestGrass(unittest.TestCase):
             self.assertIn(b'testvector@PERMANENT', vects)
         return
 
-    @skip_if_py3
     def test_attribute_table(self):
         self.project.settings(TestGrassTbl)
         self.assertTrue(hasattr(self.project, 'testgrasstbl'))
@@ -62,15 +61,15 @@ class TestGrass(unittest.TestCase):
         self.project.testgrasstbl.read()
         self.assertEqual(self.project.testgrasstbl['new'].mean(), 1000)
 
-    @skip_if_py3
     def test_subset_attribute_table(self):
         class TestGrassSubsetTbl(TestGrassTbl):
-            subset_columns = ['int_2', 'str_1']
+            subset_columns = ['cat', 'int_2', 'str_1']
             add_attributes = None
         # read
         self.project.settings(TestGrassSubsetTbl)
         self.assertTrue(hasattr(self.project, 'testgrasssubsettbl'))
-        cols = list(self.project.testgrasssubsettbl.columns)
+        ptgt = self.project.testgrasssubsettbl
+        cols = [ptgt.index.name]+list(ptgt.columns)
         self.assertEqual(cols, TestGrassSubsetTbl.subset_columns)
         # write
         self.project.testgrasssubsettbl['int_2'] = [9, 9]
