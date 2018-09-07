@@ -11,6 +11,7 @@ modelmanager --projectdir=.
 import os
 from os import path as osp
 import shutil
+import sys
 
 from modelmanager.settings import SettingsManager, SettingsUndefinedError
 
@@ -39,10 +40,18 @@ class Project(object):
         """
         Fall-back if requested setting isnt defined.
         """
-        # make sure AttributeErrors from properties are not misinterpretet
-        if attr in self.__dict__ or attr in self.__class__.__dict__:
-            msg = 'While getting %s, an AttributeError occurred.' % attr
-            raise AttributeError(msg)
+        # make sure AttributeErrors from properties are not misinterpreted
+        if attr in self.__class__.__dict__:
+            try:
+                # acess property without getattr
+                self.__class__.__dict__[attr].fget(self)
+            except AttributeError:
+                import traceback
+                ex_type, ex, tb = sys.exc_info()
+                raise AttributeError('While accessing the setting %s,' % attr +
+                                     ' the below error occurred:\n\n' +
+                                     ''.join(traceback.format_tb(tb)) +
+                                     'AttributeError: '+str(ex))
         else:
             raise SettingsUndefinedError(attr)
 

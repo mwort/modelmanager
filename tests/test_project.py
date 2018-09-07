@@ -156,6 +156,12 @@ class Settings(ProjectTestCase):
             self.project.someundefinedsetting()
         with self.assertRaises(AttributeError):
             self.project.someundefinedsetting
+        # AttributeErrors from properties dont return SettingsUndefinedErrors
+        self.project.settings(someproperty=property(lambda p: str.undefined))
+        try:
+            self.project.someproperty
+        except Exception as e:
+            self.assertNotEqual(type(e), mm.settings.SettingsUndefinedError)
 
     def test_function_introspection(self):
         def test_function(project, d=1):
