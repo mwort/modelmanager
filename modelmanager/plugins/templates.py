@@ -4,6 +4,7 @@ A plugin to read and write model (parameter) files based on a template system.
 import os
 import os.path as osp
 import string
+import warnings
 
 from modelmanager import utils
 
@@ -105,7 +106,13 @@ class Templates(object):
             values = t.read_values()
             for gv in getvalues:
                 if gv in values:
-                    gotvalues[gv] = values[gv]
+                    # warn if value already found and differing
+                    if gv in gotvalues and values[gv] != gotvalues[gv]:
+                        warnings.warn('Differing duplicate value found for ' +
+                                      '%s in %s. Will be ignored.' %
+                                      (gv, t.filepath))
+                    else:
+                        gotvalues[gv] = values[gv]
             valset = {k: v for k, v in setvalues.items() if k in values}
             setvals.update(valset)
             if valset:

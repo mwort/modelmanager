@@ -72,14 +72,14 @@ class TestTemplates(test_project.ProjectTestCase):
         self.templates(n=2, templates=['config'])
         self.assertEqual(self.templates('n', templates='param'), 1)
         self.assertEqual(self.templates('n', templates='config'), 2)
-        # value from last listed template is returned
-        self.assertEqual(self.templates("n", templates=['param', 'config']), 2)
+        # value from template listed first is returned
+        self.assertEqual(self.templates("n", templates=['config', 'param']), 2)
 
     def test_templates_dict(self):
         self.assertEqual(self.project.params['n'], 1)
         print(self.project.params)
         self.project.params['n'] = 3
-        self.assertEqual(self.templates('n'), 3)
+        self.assertEqual(self.templates('n', templates='param'), 3)
 
 
 if __name__ == '__main__':
