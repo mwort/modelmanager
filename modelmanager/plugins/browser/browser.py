@@ -27,6 +27,7 @@ class Browser(object):
     def __init__(self, project):
         self.project = project
         self.resourcedir = osp.join(project.resourcedir, 'browser')
+        # always ensure all resources are installed (not overwritten)
         self._install()
         # permanently setup django (will cause error with multiple prjects)
         self.settings = BrowserSettings(self)
@@ -201,9 +202,21 @@ class BrowserSettings(object):
 
         if self.resourcedir in sys.path:
             sys.path = [a for a in sys.path if a != self.resourcedir]
+
+        self.clear_tmp_files()
+        return
+
+    def clear_tmp_files(self):
+        """Recursively remove everything *inside* the tmpfilesdir."""
         # clear files tmpdir
         if osp.exists(self.tmpfilesdir):
-            shutil.rmtree(self.tmpfilesdir)
+            for i in os.listdir(self.tmpfilesdir):
+                p = osp.join(self.tmpfilesdir, i)
+                # thread-safe removing
+                try:
+                    shutil.rmtree(p) if osp.isdir(p) else os.remove(p)
+                except OSError:
+                    pass
         return
 
     def __enter__(self):
