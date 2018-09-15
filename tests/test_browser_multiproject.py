@@ -9,7 +9,7 @@ import modelmanager as mm
 from test_project import create_project
 
 TEST_SETTINGS = """
-from modelmanager.plugins.browser import Browser
+from modelmanager.plugins import Browser, Clone
 """
 
 
@@ -17,8 +17,13 @@ class MultiProject(unittest.TestCase):
 
     projectdirs = ['testmodel1', 'testmodel2', 'testmodel3']
 
-    def setUp(self):
+    def tearDown(self):
+        for p in self.projects:
+            p.browser.settings.unset()
+            shutil.rmtree(p.projectdir)
+        return
 
+    def test_multi_project(self):
         self.projects = []
         for n in self.projectdirs:
             p = create_project(n, TEST_SETTINGS)
@@ -36,15 +41,17 @@ class MultiProject(unittest.TestCase):
             self.assertFalse(djsettings.configured)
             self.projects.extend([p])
             self.assertTrue(os.path.exists(p.browser.settings.dbpath))
-        return
 
-    def tearDown(self):
-        for p in self.projects:
-            shutil.rmtree(p.projectdir)
-        return
-
-    def test_multi_project(self):
         self.assertNotEqual(self.projects[0], self.projects[1])
+
+    def test_multi_clones(self):
+        p = create_project(self.projectdirs[0], TEST_SETTINGS)
+        self.projects = [p]
+        from django.conf import settings as djsettings
+        for n in self.projectdirs[1:]:
+            c = p.clone(n)
+            self.assertTrue(hasattr(c, 'browser') and bool(c.browser))
+            self.assertTrue(djsettings.configured)
 
 
 if __name__ == '__main__':

@@ -170,7 +170,9 @@ class BrowserSettings(object):
         if django.conf.settings.configured:
             conf_project = django.conf.settings.PROJECT
             # check if same project is configured without comparing instances
-            if conf_project.resourcedir != self.project.resourcedir:
+            same_resources = (osp.realpath(conf_project.resourcedir) !=
+                              osp.realpath(self.project.resourcedir))
+            if same_resources:
                 raise django.core.exceptions.ImproperlyConfigured(
                       "Browser is already setup for project: %s\n" %
                       conf_project.projectdir + "You need to unset it first.")
