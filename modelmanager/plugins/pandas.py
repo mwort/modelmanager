@@ -24,7 +24,6 @@ class ProjectOrRunData(pd.DataFrame):
         # instantiated with project
         if isinstance(projectorrun, Project):
             self.project = projectorrun
-            self.path = osp.join(self.project.projectdir, self.path)
             self.read = self.from_project
         # instantiated with run
         elif hasattr(projectorrun, 'resultfiles'):
@@ -36,7 +35,9 @@ class ProjectOrRunData(pd.DataFrame):
         else:
             raise IOError('Run includes no saved files.')
         # read file
-        pd.DataFrame.__init__(self, self.read(self.path))
+        if self.path:
+            self.path = osp.join(self.project.projectdir, self.path)
+            self.from_path(self.path)
         return
 
     def find_resultfile(self):
@@ -49,6 +50,11 @@ class ProjectOrRunData(pd.DataFrame):
             raise IOError('No resultfile found for %s!' % self.name)
         fileobj = fileqs.last()
         return fileobj.file.path
+
+    def from_path(self, path, **readkwargs):
+        pd.DataFrame.__init__(self, self.read(path, **readkwargs))
+        self.path = path
+        return self
 
     def from_run(self, path, **readkwargs):
         """
