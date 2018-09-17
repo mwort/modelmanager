@@ -144,5 +144,6 @@ class propertyplugin(property):
             return cls(project)
         super(propertyplugin, self).__init__(plugin_instatiator)
         self.__doc__ = cls.__doc__
+        self.__name__ = cls.__name__
         self.plugin = cls
         return
