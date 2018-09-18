@@ -152,7 +152,10 @@ class BrowserSettings(object):
             "DATABASES": {
                 'default': {
                     'ENGINE': 'django.db.backends.sqlite3',
-                    'NAME': self.dbpath}},
+                    'NAME': self.dbpath,
+                    'OPTIONS': {'timeout': 60},
+                    }
+                },
             "MEDIA_ROOT": self.filesdir,
             "MEDIA_URL": self.filesdir}
         # override them from settings file
