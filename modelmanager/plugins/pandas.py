@@ -17,12 +17,12 @@ class ProjectOrRunData(pd.DataFrame):
     plugin = []
 
     def __init__(self, projectorrun):
-        from swimpy.project import Project  # avoid circular import
+        from modelmanager.project import Project
         # init DataFrame
         pd.DataFrame.__init__(self)
         self.name = self.__class__.__name__
         # instantiated with project
-        if isinstance(projectorrun, Project):
+        if Project in projectorrun.__class__.__mro__:
             self.project = projectorrun
             self.read = self.from_project
         # instantiated with run
