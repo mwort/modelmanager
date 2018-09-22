@@ -5,20 +5,19 @@ import os.path as osp
 import sys
 import fnmatch
 import shutil
-import time
 
 
-def load_module_path(path, name=None):
+def load_module_path(path, name=None, remove_byte_version=False):
     """Load a python module source file python version aware."""
     name = name if name else osp.splitext(osp.basename(path))[0]
     # remove byte versions if they are older than 3 seconds to avoid
     # cuncurrency issues
-    for f in [path+'c', path+'o']:
-        try:
-            if osp.getmtime(f) - time.time() > 3:
+    if remove_byte_version:
+        for f in [path+'c', path+'o']:
+            try:
                 os.remove(f)
-        except OSError:
-            pass
+            except OSError:
+                pass
     # remove module references
     try:
         del sys.modules[name]

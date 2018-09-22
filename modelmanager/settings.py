@@ -45,7 +45,8 @@ class SettingsManager(object):
         are used when initialising plugins.
         """
         self.file = self._find_settings()
-        self.module = utils.load_module_path(self.file)
+        self.module = utils.load_module_path(self.file,
+                                             remove_byte_version=True)
         # resourcedir cant be overriden
         override_settings["resourcedir"] = osp.dirname(self.file)
         settings = load_settings(self.file)
