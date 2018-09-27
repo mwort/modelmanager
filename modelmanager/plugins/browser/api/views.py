@@ -134,4 +134,11 @@ def is_matplotlib_figure(fobj, result):
     return result
 
 
-RESULTFILTERS.extend([is_picture_path, is_matplotlib_figure])
+def is_run(fobj, result):
+    from ..database.models import Run
+    if Run in result.__class__.__mro__:
+        return '<a href="/browser/run/%i/change">%s</a>' % (result.pk, result)
+    return result
+
+
+RESULTFILTERS.extend([is_picture_path, is_matplotlib_figure, is_run])
