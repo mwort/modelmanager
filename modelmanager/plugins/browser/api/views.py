@@ -1,14 +1,19 @@
 import traceback
 import os
 import os.path as osp
+import sys
 
 from django.conf import settings
 from django.http import HttpResponse
 from django.contrib.admin.utils import unquote
 
-from modelmanager.settings import FunctionInfo
 from .models import Function
 from browser.models import Run
+
+# strange behaviour with unquote under PY3
+if sys.version_info >= (3, 0):
+    def unquote(s):
+        return s.replace('_5F', '_')
 
 IMGEXT = ['.jpg', '.png', '.gif', '.svg', '.bmp']
 IMGTAG = '<img src="{0}" alt="{0}">'
@@ -65,7 +70,7 @@ def call_function(fobj, function):
         try:
             returned = function(**arguments)
         except Exception:
-            finfo = FunctionInfo(function)
+            finfo = settings.PROJECT.settings.functions[fobj.name]
             errormsg = ("<br>Something isn't right:<pre>{0}</pre><br>Here is "
                         "the function's source code:<br><pre>{1}</pre>"
                         .format(traceback.format_exc(), finfo.code))
