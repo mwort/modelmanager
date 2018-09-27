@@ -21,7 +21,7 @@ grass_mapset =  "testmapset"
 class TestGrassTbl(GrassAttributeTable):
     vector = 'testvector@PERMANENT'
     key = 'cat'
-    add_attributes = {'obs': {1: pd.Series([12, 2, 2, 4])}}
+    obs = pd.DataFrame({1: [12, 2, 2, 4]})
 
 
 def skip_if_py3(f):

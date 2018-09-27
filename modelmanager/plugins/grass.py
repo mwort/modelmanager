@@ -201,9 +201,6 @@ class GrassAttributeTable(DataFrame):
     layer = 1
     #: Specify a different key index, default is the first column
     key = None
-    #: dictionary of dictionary-like data or names project setting of those
-    #: data must have the same keys as table
-    add_attributes = None
     #: list, optional subset of columns to read, writing reads+writes full tbl
     subset_columns = None
     #: optional if it shouldnt call grass to find out
@@ -240,29 +237,16 @@ class GrassAttributeTable(DataFrame):
         tbl.set_index(self.key, inplace=True, verify_integrity=True)
         # fill DataFrame
         super(GrassAttributeTable, self).__init__(tbl)
-        # append dictionary-like data
-        if self.add_attributes:
-            self.append_attributes(self.add_attributes)
         return
 
     @property
     def dbconnection(self):
         return sqlite3.connect(self.database)
 
-    def append_attributes(self, appenddict):
-        em = 'append attribute must be dictionary-like. %r' % appenddict
-        assert hasattr(appenddict, 'items'), em
-        for k, v in appenddict.items():
-            if type(v) == str:
-                v = self.project._attribute_or_function_result(v)
-            self.loc[:, k] = pd.Series(v)
-        return
-
     def write(self):
         """Save table back to GRASS sqlite3 database.
         """
-        dropcols = self.add_attributes.keys() if self.add_attributes else []
-        cleantbl = self.drop(dropcols, axis=1)
+        cleantbl = self
         with self.dbconnection as con:
             if self.subset_columns:  # read other columns
                 tbl = pd.read_sql('select * from %s;' % self.table, con)
