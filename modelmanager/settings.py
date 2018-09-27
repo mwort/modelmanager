@@ -398,6 +398,6 @@ All keyword arguements: `%s_<kwarg> = value`"
 """
     add_docs = add_docs % ('<plugin>_' if iscall else '[<plugin>_]<method>')
     function.__doc__ = (finfo.doc or '') + add_docs
-    # attach original function
-    f.decorated_function = function
+    # attach original function (finfo has also decorated function)
+    f.decorated_function = finfo.function
     return f
