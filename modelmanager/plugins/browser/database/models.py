@@ -44,7 +44,7 @@ class Run(models.Model):
         return self.__str__()
 
     def get_file_interface_functions(self):
-        """Get all Function objects that belong to any resultfile."""
+        """Get all Function objects that belong to any file."""
         fn = []
         for related, interfaces in self.file_interfaces.items():
             for rf in self._get_related_files(related):

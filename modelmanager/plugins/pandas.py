@@ -26,11 +26,11 @@ class ProjectOrRunData(pd.DataFrame):
             self.project = projectorrun
             self.read = self.from_project
         # instantiated with run
-        elif hasattr(projectorrun, 'resultfiles'):
+        elif hasattr(projectorrun, 'files'):
             from django.conf import settings
             self.project = settings.PROJECT
             self.run = projectorrun
-            self.path = self.find_resultfile()
+            self.path = self.find_file()
             self.read = self.from_run
         else:
             raise IOError('Run includes no saved files.')
@@ -40,14 +40,14 @@ class ProjectOrRunData(pd.DataFrame):
             self.from_path(self.path)
         return
 
-    def find_resultfile(self):
+    def find_file(self):
         # find file
-        fileqs = (self.run.resultfiles.filter(tags__contains=self.name) or
-                  self.run.resultfiles.filter(file__contains=self.name))
+        fileqs = (self.run.files.filter(tags__contains=self.name) or
+                  self.run.files.filter(file__contains=self.name))
         if fileqs.count() > 1:
-            print('Found two resultfiles for %s, using last!' % self.name)
+            print('Found two files for %s, using last!' % self.name)
         elif fileqs.count() == 0:
-            raise IOError('No resultfile found for %s!' % self.name)
+            raise IOError('No file found for %s!' % self.name)
         fileobj = fileqs.last()
         return fileobj.file.path
 
@@ -58,7 +58,7 @@ class ProjectOrRunData(pd.DataFrame):
 
     def from_run(self, path, **readkwargs):
         """
-        Read data from a run instance with resultfiles.
+        Read data from a run instance with files.
         """
         reader = self.reader_by_ext(path)
         return reader(path, **readkwargs)

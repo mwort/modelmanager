@@ -53,7 +53,7 @@ class BrowserProjectTestCase(unittest.TestCase):
         self.test_run = run
         param = self.models['parameter'](name='xyz', value=1.33, run=run)
         param.save()
-        result = self.models['resultindicator'](name='x', value=0.8, run=run)
+        result = self.models['indicator'](name='x', value=0.8, run=run)
         result.save()
         # test browser interaction
         self.client = TestClient()
@@ -96,17 +96,17 @@ class Tables(BrowserProjectTestCase):
         # with related fields
         run = self.browser.insert('run', notes='has related', tags='crazy',
                                   parameters=dict(name='px', value=0.77),
-                                  resultindicators=[dict(name='x', value=1.6),
-                                                    dict(name='n', value=0.1)])
+                                  indicators=[dict(name='x', value=1.6),
+                                              dict(name='n', value=0.1)])
         # read again
         run_read = self.browser.runs.filter(tags='crazy').last()
-        for related in ['parameters', 'resultindicators', 'resultfiles']:
+        for related in ['parameters', 'indicators', 'files']:
             self.assertTrue(hasattr(run, related))
             self.assertTrue(hasattr(run_read, related))
         # related field values are managers
-        self.assertEqual(len(run_read.resultindicators.all()), 2)
-        ResultIndicator = self.browser.models['resultindicator']
-        self.assertIs(type(run_read.resultindicators.first()), ResultIndicator)
+        self.assertEqual(len(run_read.indicators.all()), 2)
+        indicator = self.browser.models['indicator']
+        self.assertIs(type(run_read.indicators.first()), indicator)
 
 
 class DatabaseAdmin(BrowserProjectTestCase):
@@ -123,9 +123,9 @@ class DatabaseAdmin(BrowserProjectTestCase):
     def test_file_upload(self):
         with open(__file__) as f:
             data = {'run': 1, 'name': "something", 'file': f}
-            response = self.client.post('/browser/resultfile/add/', data)
+            response = self.client.post('/browser/file/add/', data)
         self.assertEqual(response.status_code, 302)  # redirected on success
-        resfile = self.browser.models['resultfile'].objects.last()
+        resfile = self.browser.models['file'].objects.last()
         with open(__file__, 'rb') as selfile:
             with resfile.file as rf:
                 resfilecontents = rf.read()
@@ -171,19 +171,19 @@ class Files(BrowserProjectTestCase):
     def test_file_save_types(self):
         from django.core.files import File as DjFile
         for f in [DjFile(open(__file__)), open(__file__), __file__]:
-            resfile = self.browser.insert('resultfile',
+            resfile = self.browser.insert('file',
                                           file=f, run=self.test_run)
             newpath = resfile.file.path
             self.assertTrue(os.path.exists(newpath))
             fdir = os.path.join(self.project.browser.settings.filesdir, 'runs')
             self.assertTrue(newpath.startswith(fdir))
-            resfile = self.browser.models['resultfile'].objects.first()
+            resfile = self.browser.models['file'].objects.first()
             self.assertEqual(newpath, resfile.file.path)
             resfile.delete()
             self.assertFalse(os.path.exists(newpath))
 
         with self.assertRaises(IOError):
-            resfile = self.browser.insert('resultfile',
+            resfile = self.browser.insert('file',
                                           file=123, run=self.test_run)
 
         return
