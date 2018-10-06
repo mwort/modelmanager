@@ -147,5 +147,7 @@ class propertyplugin(property):
         super(propertyplugin, self).__init__(plugin_instatiator)
         self.__doc__ = cls.__doc__
         self.__name__ = cls.__name__
+        # so sphinx recognises the property as not imported
+        self.__module__ = getattr(cls, '__module__', None)
         self.plugin = cls
         return
