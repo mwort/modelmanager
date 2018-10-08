@@ -134,7 +134,7 @@ class File(models.Model):
                 buf = BytesIO(bf.read())
             fn = osp.basename(self.parsed_file)
             if not self.copy:
-                os.remove(self.parsed_file.name)
+                os.remove(self.parsed_file)
         else:
             buf = self.parsed_file
             fn = self.parsed_filename
