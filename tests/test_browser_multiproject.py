@@ -9,7 +9,8 @@ import modelmanager as mm
 from test_project import create_project
 
 TEST_SETTINGS = """
-from modelmanager.plugins import Browser, Clone
+from modelmanager.plugins import clone
+from modelmanager.plugins.browser import browser
 """
 
 

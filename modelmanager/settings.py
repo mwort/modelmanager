@@ -121,9 +121,8 @@ class SettingsManager(object):
         # classes to plugins
         for k, c in settypes['classes'].items():
             instance = self._instatiate(c)
-            name = k.lower()
-            setattr(self._project, name, instance)
-            self.register_plugin(c, name)
+            setattr(self._project, k, instance)
+            self.register_plugin(c, k)
         return
 
     def register_function(self, f, name):

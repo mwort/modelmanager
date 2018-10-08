@@ -21,7 +21,7 @@ def test_function(project, d=1, edit=False):
     dd = d + 1
     return dd
 
-class TestPlugin:
+class testplugin:
     test_plugin_variable = 456
 
     def __init__(self, project):

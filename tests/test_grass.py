@@ -18,7 +18,7 @@ grass_mapset =  "testmapset"
 """
 
 
-class TestGrassTbl(GrassAttributeTable):
+class testgrasstbl(GrassAttributeTable):
     vector = 'testvector@PERMANENT'
     key = 'cat'
     obs = pd.DataFrame({1: [12, 2, 2, 4]})
@@ -53,7 +53,7 @@ class TestGrass(unittest.TestCase):
         return
 
     def test_attribute_table(self):
-        self.project.settings(TestGrassTbl)
+        self.project.settings(testgrasstbl)
         self.assertTrue(hasattr(self.project, 'testgrasstbl'))
         self.assertIsInstance(self.project.testgrasstbl.obs[1], pd.Series)
         self.project.testgrasstbl['new'] = 1000
@@ -62,15 +62,15 @@ class TestGrass(unittest.TestCase):
         self.assertEqual(self.project.testgrasstbl['new'].mean(), 1000)
 
     def test_subset_attribute_table(self):
-        class TestGrassSubsetTbl(TestGrassTbl):
+        class testgrasssubsettbl(testgrasstbl):
             subset_columns = ['cat', 'int_2', 'str_1']
             add_attributes = None
         # read
-        self.project.settings(TestGrassSubsetTbl)
+        self.project.settings(testgrasssubsettbl)
         self.assertTrue(hasattr(self.project, 'testgrasssubsettbl'))
         ptgt = self.project.testgrasssubsettbl
         cols = [ptgt.index.name]+list(ptgt.columns)
-        self.assertEqual(cols, TestGrassSubsetTbl.subset_columns)
+        self.assertEqual(cols, testgrasssubsettbl.subset_columns)
         # write
         self.project.testgrasssubsettbl['int_2'] = [9, 9]
         self.project.testgrasssubsettbl.write()

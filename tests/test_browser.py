@@ -7,13 +7,13 @@ import cProfile, pstats
 from django.apps import apps
 from django.test import Client as TestClient
 
-from modelmanager.plugins import Browser
+from modelmanager.plugins.browser import browser
 
 from test_project import create_project
 import imp
 
 TEST_SETTINGS = """
-from modelmanager.plugins.browser import Browser
+from modelmanager.plugins.browser import browser
 from modelmanager import utils
 
 def test_function(project, s='hello', **kwargs):
@@ -66,7 +66,7 @@ class BrowserProjectTestCase(unittest.TestCase):
 class BrowserSetup(BrowserProjectTestCase):
 
     def test_init(self):
-        self.assertTrue(isinstance(self.browser, Browser))
+        self.assertTrue(isinstance(self.browser, browser))
         self.assertTrue(os.path.exists(self.browser.settings.tmpfilesdir))
         with self.project.browser.settings:
             from browser.models import Run

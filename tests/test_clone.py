@@ -10,7 +10,7 @@ from modelmanager.project import ProjectDoesNotExist
 from test_project import create_project
 
 TEST_SETTINGS = """
-from modelmanager.plugins import Clone
+from modelmanager.plugins import clone
 """
 
 

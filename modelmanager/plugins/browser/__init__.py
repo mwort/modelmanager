@@ -22,7 +22,7 @@ from django.apps import apps as djapps
 from modelmanager import utils
 
 
-class Browser(object):
+class browser(object):
 
     def __init__(self, project):
         self.project = project

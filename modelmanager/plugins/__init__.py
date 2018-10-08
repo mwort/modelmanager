@@ -1,4 +1,2 @@
-from .browser import Browser
-from .templates import Templates
-from .clones import Clone
-from . import grass
+from .templates import templates
+from .clones import clone

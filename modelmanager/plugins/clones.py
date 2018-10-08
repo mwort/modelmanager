@@ -11,7 +11,7 @@ from modelmanager import utils
 from modelmanager.settings import parse_settings
 
 
-class Clone(object):
+class clone(object):
     """
     Project cloning plugin.
     """

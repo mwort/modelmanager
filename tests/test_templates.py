@@ -6,7 +6,7 @@ import cProfile, pstats
 import test_project
 
 test_project.TEST_SETTINGS += """
-from modelmanager.plugins.templates import Templates
+from modelmanager.plugins import templates
 from modelmanager.plugins.templates import TemplatesDict as _TemplatesDict
 from modelmanager import utils
 

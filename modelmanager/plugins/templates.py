@@ -15,7 +15,7 @@ except ImportError:
                       'package to be installed. Try pip install parse')
 
 
-class Templates(object):
+class templates(object):
     """
     Templates modelmanager plugin.
 
