@@ -214,8 +214,8 @@ class GrassAttributeTable(DataFrame):
         super(GrassAttributeTable, self).__init__()
         self.__dict__.update(override)
         self.project = project
-        em = 'vector class attributes needed (others are optional).'
-        assert self.vector, em
+        em = 'vector class attribute (str) needed (others are optional).'
+        assert type(self.vector) == str, em
         nms = self.vector.split('@')
         self.mapset = nms[1] if len(nms) > 1 else project.grass_mapset
         self.table = self.table or nms[0]
