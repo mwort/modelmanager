@@ -1,6 +1,20 @@
 # CHANGE LOG
 
 
+## v0.4 (2018-11-10)
+* Allow capitalised plugins and dont change plugins to lowercase. Existing
+  plugins are all changed to lowercase and the browser plugin needs to be
+  imported via `from modelmanager.plugins.browser import browser`.
+* Rename ResultFile and ResultIndicator to File and Indicator in browser plugin.
+* Allow clones with a linked resources load the same browser app.
+* GrassAttributeTable now works without grass and doesnt support the
+  `add_attributes` attribute anymore.
+* Read `GrassModule` arguments from specified settings dict rather than any
+  setting.
+* New defaults argument to `SettingsManager.load`.
+* Implement optional `argcomplete` support for the commandline interface.
+
+
 ## v0.3 (2018-08-01)
 * first release on PyPI (PyPI name changed to model-manager)
 * added *grass* plugin
