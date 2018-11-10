@@ -24,6 +24,7 @@ lib
 lib64
 env
 *.sqlite3
+dist
 
 # Installer logs
 pip-log.txt
