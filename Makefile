@@ -31,6 +31,12 @@ release:
 	git push --tags
 	twine upload dist/*
 
+
+docs:
+	sphinx-apidoc --ext-viewcode --ext-autodoc -d 2 -f -o docs/api modelmanager/
+	cd docs && make clean && make html
+
+
 # working dir should be clean (git)
 update_docs:
 	# build the docs
