@@ -27,6 +27,7 @@ version:
 
 release:
 	python setup.py sdist
+	git push
 	git push --tags
 	twine upload dist/*
 
