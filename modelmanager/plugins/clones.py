@@ -54,7 +54,9 @@ class clone(object):
         # dynamically inheriting project class
         class ClonedProject(self.project.__class__, ClonedProjectMixin):
             pass
-        return ClonedProject(self._get_path_by_name(name), **settings)
+        if 'projectdir' not in settings:
+            settings['projectdir'] = self._get_path_by_name(name)
+        return ClonedProject(**settings)
 
     def __getitem__(self, key):
         """
@@ -106,13 +108,16 @@ class clone(object):
         if linked:
             links = links + [resdir]  # copy and append!
         else:
+            # ignore clones_dir
             ignore = ignore + [prel(self.resourcedir, prodir)]
             if hasattr(self.project, 'browser'):
-                ignore.append(prel(self.browser.settings.dbpath, prodir))
+                bdbpath = prel(self.project.browser.settings.dbpath, prodir)
+                ignore.append(bdbpath)
         printverbose('Ignore rules: %r' % ignore)
         printverbose('Link rules: %r' % links)
         # new projectdir
         cprodir = pj(clonesdir, name)
+        settings['projectdir'] = cprodir
         # remove if fresh and already exists
         if os.path.exists(cprodir):
             if fresh:
