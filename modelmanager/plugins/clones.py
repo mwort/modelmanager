@@ -38,8 +38,8 @@ class clone(object):
                                       % self.project.clone_dir)
         return path
 
-    def names(self):
-        names = glob(osp.join(self.project.clone_dir, '*'))
+    def names(self, pattern='*'):
+        names = glob(osp.join(self.project.clone_dir, pattern))
         namesdir = [osp.relpath(n, self.project.clone_dir)
                     for n in sorted(names) if osp.isdir(n)]
         return namesdir
