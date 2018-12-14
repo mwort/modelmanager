@@ -223,6 +223,9 @@ class CommandlineInterface(ProjectTestCase):
         # long
         out, err2 = self.call('test_function', '--edit')
         self.assertEqual(err1, err2)
+        # False
+        out, err3 = self.call('test_function', '--not-edit')
+        self.assertEqual(err3[0], '>>> test_function()')  # False is default
 
 
 if __name__ == '__main__':

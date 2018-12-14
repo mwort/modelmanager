@@ -193,26 +193,35 @@ class CommandlineInterface(object):
         appendshort = (len(shortkw) == len(f.optional_arguments) and
                        not any([i in f.positional_arguments for i in shortkw]))
         for a, d in zip(f.optional_arguments, f.defaults):
-            typ = type(d) if d is not None else self.to_python
-            hasanno = hasattr(f, 'annotations') and a in f.annotations
-            help = (f.annotations[a]+' ' if hasanno else '')
-            kw = dict(help=help, default=d)
-            args = ['--'+a]
-            if typ == bool:
-                disen = {True: 'disable', False: 'enable'}
-                kw.update(action='store_%s' % str(not d).lower(),
-                          help=kw['help']+'(%s %s)' % (disen[d], a))
-            else:
-                addhelp = '(default={0!r})'.format(d)
-                kw.update(type=typ, help=kw['help']+addhelp)
-            # make short version if not already used (h = universal help)
-            if appendshort and a[:1] != 'h':
-                args.append('-'+a[:1])
-            parser.add_argument(*args, **kw)
+            self._add_optional_argument(parser, f, a, d, short=appendshort)
         if f.kwargs:
             parser.add_argument('--' + f.kwargs, nargs=argparse.REMAINDER,
                                 help='parse any additional keyword arguments')
         return parser
+
+    def _add_optional_argument(self, parser, function, argname, default,
+                               short=False):
+        f, a, d = function, argname, default
+        typ = type(d) if d is not None else self.to_python
+        hasanno = hasattr(f, 'annotations') and a in f.annotations
+        help = (f.annotations[a]+' ' if hasanno else '')
+        kw = dict(help=help, default=d)
+        args = ['--'+a]
+        if typ == bool:
+            kw.update(action='store_true', dest=a)
+            notkw = dict(action='store_false', dest=a, default=d)
+            de = {False: 'disable', True: 'enable'}
+            bhs = argparse.SUPPRESS, kw['help']+'(%s %s)' % (de[not d], a)
+            kw['help'], notkw['help'] = bhs if d else bhs[::-1]
+            parser.add_argument('--not-'+a, **notkw)
+        else:
+            addhelp = '(default={0!r})'.format(d)
+            kw.update(type=typ, help=kw['help']+addhelp)
+        # make short version if not already used (h = universal help)
+        if short and a[:1] != 'h':
+            args.append('-'+a[:1])
+        parser.add_argument(*args, **kw)
+        return
 
     @staticmethod
     def to_python(v):
