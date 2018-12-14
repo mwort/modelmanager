@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## v0.5 (2018-12-14)
+* Allow parsing of --projectdir/-p as first argument of commandline
+* Various fixes, especially in clone plugin
+* Added GroupPlugin for simple grouper plugins
+* Boolean CLI arguments are set to False via --not-<arg>
+
 
 ## v0.4 (2018-11-10)
 * Allow capitalised plugins and dont change plugins to lowercase. Existing
