@@ -5,6 +5,7 @@ from argparse import RawTextHelpFormatter
 import traceback
 import pprint
 import sys
+import os.path as osp
 
 # optional argcomplete support
 try:
@@ -13,6 +14,7 @@ except ImportError:
     argcomplete = False
 
 from modelmanager.settings import FunctionInfo
+from modelmanager.project import ProjectDoesNotExist
 
 
 class CommandlineInterface(object):
@@ -30,25 +32,41 @@ class CommandlineInterface(object):
         Main program description. Default project.__doc__
     """
 
-    def __init__(self, project=None, functions={}, description=None):
+    def __init__(self, project=None, description=None, **functions):
         """Build the comandline interface."""
         em = 'Either a project or functions must be given.'
         assert project or functions, em
-        self.function_info = {n: FunctionInfo(f) for n, f in functions.items()}
-        self.functions = functions
-        if project:
-            for n, f in project.settings.functions.items():
-                self.function_info.setdefault(n, f)
-            self.plugins = project.settings.plugins
+
+        dscpt = description or (project.__doc__ if project else '')
+        mpargs = dict(description=dscpt, formatter_class=RawTextHelpFormatter)
+        self.mainparser = argparse.ArgumentParser(**mpargs)
+        self.mainparser.add_argument('-p', '--projectdir', metavar='<path>',
+                                     help='The project directory')
+        # extract project dir without firing parser
+        potpd = sys.argv[1]
+        if potpd.startswith('-p') or potpd.startswith('--projectdir'):
+            projectdir = potpd.split('=')[1] if '=' in potpd else sys.argv[2]
+            msg = 'projectdir %s does not exist.' % projectdir
+            assert osp.exists(projectdir), msg
+        else:
+            projectdir = '.'
+        try:
+            self.project = project(projectdir=projectdir)
+        except ProjectDoesNotExist:
+            self.project = None
+
+        if self.project:
+            self.functions = {}
+            self.function_info = self.project.settings.functions
+            self.plugins = self.project.settings.plugins
         else:
             self.plugins = {}
-        self.project = project
-        mpargs = dict(description=description or project.__doc__,
-                      formatter_class=RawTextHelpFormatter)
-        self.mainparser = argparse.ArgumentParser(**mpargs)
+            self.function_info = {n: FunctionInfo(f)
+                                  for n, f in functions.items()}
+            self.functions = functions
+
         self.mainsubparser = self.mainparser.add_subparsers(
                                                         metavar='<command>')
-
         # create plugin subparsers
         pisubparsers = {}
         for pi, picls in sorted(self.plugins.items()):

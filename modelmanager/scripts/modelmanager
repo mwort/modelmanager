@@ -3,8 +3,4 @@
 
 from modelmanager import project, commandline
 
-try:
-    commandline.CommandlineInterface(project.Project()).run()
-except project.ProjectDoesNotExist:
-    functions = {'setup': project.setup}
-    commandline.CommandlineInterface(functions=functions).run()
+commandline.CommandlineInterface(project.Project, setup=project.setup).run()

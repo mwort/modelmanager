@@ -188,8 +188,7 @@ class Settings(ProjectTestCase):
 class CommandlineInterface(ProjectTestCase):
 
     def call(self, *argslist):
-        wd = os.getcwd()
-        os.chdir(self.projectdir)
+        argslist = ['modelmanager', '-p', self.projectdir]+list(argslist)
         proc = subprocess.Popen(argslist, stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE)
         proc.wait()
@@ -198,32 +197,31 @@ class CommandlineInterface(ProjectTestCase):
         print('\n'.join(stderrlines))
         with proc.stdout as f:
             stdoutlines = [l.rstrip().decode() for l in f.readlines()]
-        os.chdir(wd)
         return stdoutlines, stderrlines
 
     def test_function(self):
-        out, err = self.call('modelmanager', 'test_function', '--d=2')
+        out, err = self.call('test_function', '--d=2')
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0], '3')
         self.assertEqual(len(err), 1)
         self.assertEqual(err[0], '>>> test_function(d=2)')
 
     def test_plugin_method(self):
-        out, err = self.call('modelmanager', 'testplugin', 'test_method', '2')
+        out, err = self.call('testplugin', 'test_method', '2')
         self.assertEqual(len(out), 1)
         self.assertEqual(out[0], '2')
         self.assertEqual(len(err), 1)
         self.assertEqual(err[0], '>>> testplugin.test_method(2)')
-        out, err = self.call('modelmanager', 'result', 'resultresult', 'plot')
+        out, err = self.call('result', 'resultresult', 'plot')
         self.assertEqual(out[0], "bar")
         self.assertEqual(err[0], ">>> result.resultresult.plot()")
 
     def test_flag(self):
         # short
-        out, err1 = self.call('modelmanager', 'test_function', '-e')
+        out, err1 = self.call('test_function', '-e')
         self.assertEqual(err1[0], '>>> test_function(edit=True)')
         # long
-        out, err2 = self.call('modelmanager', 'test_function', '--edit')
+        out, err2 = self.call('test_function', '--edit')
         self.assertEqual(err1, err2)
 
 
