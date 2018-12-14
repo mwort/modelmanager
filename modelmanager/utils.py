@@ -138,6 +138,7 @@ class propertyplugin(property):
     project.result -> result instance
     ```
     """
+
     def __init__(self, cls):
         def plugin_instatiator(project):
             # take project from plugin if decorator used inside plugins
@@ -150,4 +151,14 @@ class propertyplugin(property):
         # so sphinx recognises the property as not imported
         self.__module__ = getattr(cls, '__module__', None)
         self.plugin = cls
+        return
+
+
+class GroupPlugin(object):
+    """
+    An abstract class to group functionality.
+    """
+
+    def __init__(self, project):
+        self.project = project
         return
