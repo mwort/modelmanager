@@ -22,7 +22,7 @@ class CommandlineInterface(object):
 
     Arguments
     ---------
-    project : <project instance>, optional
+    project : <project class>, optional
         Project to read and execute functions and plugins for. If None,
         functions must be given.
     functions : dict
