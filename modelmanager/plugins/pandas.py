@@ -1,6 +1,8 @@
 """A collection of pandas data interfaces to a project instance."""
 from __future__ import absolute_import
 import os.path as osp
+from glob import glob
+import warnings
 
 try:
     import pandas as pd
@@ -172,3 +174,50 @@ class ReadWriteDataFrame(pd.DataFrame):
         Override me. Error checking and writing to file should be done here.
         """
         raise NotImplementedError('Writing of %s not implemented.' % self.name)
+
+
+class R(object):
+    """
+    Interface plugin to R using rpy2 geared towards pandas interoperability.
+
+    The plugin makes the R object available as a project instance and sources
+    all R source files in the project resourcedir.
+    """
+    def __init__(self, project=None):
+        self.project = project
+        self._initialize()
+        if project:
+            self.source_resources()
+        return
+
+    def _initialize(self):
+        try:
+            from rpy2.robjects import r, pandas2ri
+        except ImportError:
+            raise('Cant import rpy2 needed for the R plugin.')
+        # activate automatic pandas dataframe conversion
+        pandas2ri.activate()
+        self._r = r
+        self._pandas2ri = pandas2ri
+        return
+
+    def _source_resources(self):
+        prd = self.project.resourcedir
+        rsrc = sorted(glob(osp.join(prd, '*.r')) + glob(osp.join(prd, '*.R')))
+        if len(rsrc) == 0:
+            warnings.warn('No R source file found in %s' % prd)
+        else:
+            for s in rsrc:
+                self._r.source(s)
+        return
+
+    def to_python(self, obj):
+        """Convert a rpy2 object to pandas and python equivalents."""
+        return self._pandas2ri.ri2py(obj)
+
+    def __getattr__(self, a):
+        return getattr(self._r, a)
+
+    def __call__(self, *args, **kwargs):
+        """Call any R string/code."""
+        return self._r(*args, **kwargs)
