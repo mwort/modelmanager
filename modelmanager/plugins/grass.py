@@ -19,9 +19,10 @@ except ImportError:
 class GrassSession(object):
     """Open a GRASS session in a mapset without launching GRASS.
 
-    To be used as a context. The context variable is the grass.script module:
-    with GrassSession('path/to/mapset') as grass:
-        grass.run_command()
+    To be used as a context. The context variable is the grass.script module::
+
+        with GrassSession('path/to/mapset') as grass:
+            grass.run_command()
 
     Arguments
     ---------
@@ -193,6 +194,13 @@ class GrassOverwrite(object):
 class GrassAttributeTable(DataFrame):
     """A plugin to represent a grass vector attribute table.
 
+    This plugin can either be used with a project instance as the first
+    argument to get the GRASS connection parameters or by specifically stating
+    the database path. E.g.::
+
+        dbpath = 'grassloc/PERMANENT/sqlite/sqlite.db'
+        table = GrassAttributeTable(vector='test', database=dbpath)
+
     Specify `database` and `table`, if you dont want to rely on grass to get
     the table connection parameters.
     """
@@ -210,17 +218,20 @@ class GrassAttributeTable(DataFrame):
     #: needed to stop exposing all pd.DataFrame methods
     plugin = []
 
-    def __init__(self, project, **override):
+    def __init__(self, project=None, **override):
         super(GrassAttributeTable, self).__init__()
         self.__dict__.update(override)
         self.project = project
         em = 'vector class attribute (str) needed (others are optional).'
         assert type(self.vector) == str, em
         nms = self.vector.split('@')
-        self.mapset = nms[1] if len(nms) > 1 else project.grass_mapset
+        if project:
+            self.mapset = nms[1] if len(nms) > 1 else project.grass_mapset
+            dfdb = osp.join(project.grass_db, project.grass_location,
+                            self.mapset, 'sqlite', 'sqlite.db')
+        else:
+            assert self.database, 'Without project, database must be given.'
         self.table = self.table or nms[0]
-        dfdb = osp.join(project.grass_db, project.grass_location, self.mapset,
-                        'sqlite', 'sqlite.db')
         self.database = self.database or dfdb
         self.key = self.key or 0
         # fill dataframe
