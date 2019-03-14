@@ -43,7 +43,7 @@ class CommandlineInterface(object):
         self.mainparser.add_argument('-p', '--projectdir', metavar='<path>',
                                      help='The project directory')
         # extract project dir without firing parser
-        potpd = sys.argv[1]
+        potpd = sys.argv[1] if len(sys.argv) > 1 else ''
         if potpd.startswith('-p') or potpd.startswith('--projectdir'):
             projectdir = potpd.split('=')[1] if '=' in potpd else sys.argv[2]
             msg = 'projectdir %s does not exist.' % projectdir
@@ -67,6 +67,7 @@ class CommandlineInterface(object):
 
         self.mainsubparser = self.mainparser.add_subparsers(
                                                         metavar='<command>')
+        self.mainsubparser.required = True
         # create plugin subparsers
         pisubparsers = {}
         for pi, picls in sorted(self.plugins.items()):
