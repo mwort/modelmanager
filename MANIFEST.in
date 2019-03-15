@@ -1,3 +1,4 @@
 include README.md
 include requirements.txt
 include modelmanager/resources
+graft modelmanager/plugins/browser
