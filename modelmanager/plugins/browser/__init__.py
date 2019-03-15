@@ -153,7 +153,7 @@ class BrowserSettings(object):
                 'default': {
                     'ENGINE': 'django.db.backends.sqlite3',
                     'NAME': self.dbpath,
-                    'OPTIONS': {'timeout': 60},
+                    'OPTIONS': {'timeout': 300},
                     }
                 },
             "MEDIA_ROOT": self.filesdir,
