@@ -24,7 +24,7 @@ from .api.views import call_project_function, call_run_function
 urlpatterns = [
     # function call
     url(r'api/function/(?P<pk>.+)/call/$', call_project_function),
-    url(r'browser/run/(?P<rid>\d)/function/(?P<fpk>.+)/call/$',
+    url(r'browser/run/(?P<rid>\d+)/function/(?P<fpk>.+)/call/$',
         call_run_function),
     url(r'', admin.site.urls),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
