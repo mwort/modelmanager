@@ -81,7 +81,7 @@ def call_function(fobj, function):
         # filter results
         for fltr in RESULTFILTERS:
             result = fltr(fobj, returned)
-            if result != returned:
+            if str(result) != str(returned):
                 break
     # make sure unicode string is returned
     return HttpResponse(u'%s' % (result,))
@@ -141,4 +141,13 @@ def is_run(fobj, result):
     return result
 
 
-RESULTFILTERS.extend([is_picture_path, is_matplotlib_figure, is_run])
+def has_to_html(fobj, result):
+    if hasattr(result, 'to_html') and callable(result.to_html):
+        return result.to_html()
+    return result
+
+
+RESULTFILTERS += [has_to_html,
+                  is_picture_path,
+                  is_matplotlib_figure,
+                  is_run]
