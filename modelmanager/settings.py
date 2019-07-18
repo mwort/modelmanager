@@ -387,16 +387,17 @@ def parse_settings(function):
     # add signiture to beginning of docstrign if PY2
     if sys.version_info < (3, 0):
         sig = '%s(%s)\n' % (finfo.name, finfo.signiture)
-        f.__doc__ = sig + finfo.doc
+    else:
+        sig = ''
     # add generic docs
     add_docs = """
 
 Settings
 --------
-All keyword arguements: `%s_<kwarg> = value`
-"""
-    add_docs = add_docs % ('<plugin>' if iscall else '[<plugin>_]<method>')
-    function.__doc__ = (finfo.doc or '') + add_docs
+All keyword arguements: %s_<kwarg> = value
+""" % ('<plugin>' if iscall else '[<plugin>_]<method>')
+    f.__doc__ = sig + (finfo.doc or '') + add_docs
+    finfo.function.__doc__ = (finfo.doc or '') + add_docs
     # attach original function (finfo has also decorated function)
     f.decorated_function = finfo.function
     return f
