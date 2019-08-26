@@ -220,19 +220,28 @@ class GrassAttributeTable(DataFrame):
 
     def __init__(self, project=None, **override):
         super(GrassAttributeTable, self).__init__()
+        if type(project) == str:
+            project, override['vector'] = None, project
         self.__dict__.update(override)
         self.project = project
-        em = 'vector class attribute (str) needed (others are optional).'
+        em = 'vector (str) needed (others are optional).'
         assert type(self.vector) == str, em
         nms = self.vector.split('@')
-        if project:
+        if project and not self.database:
             self.mapset = nms[1] if len(nms) > 1 else project.grass_mapset
-            dfdb = osp.join(project.grass_db, project.grass_location,
-                            self.mapset, 'sqlite', 'sqlite.db')
+            self.database = osp.join(project.grass_db, project.grass_location,
+                                     self.mapset, 'sqlite', 'sqlite.db')
+        # retrive info in a grass session active
+        elif os.environ.get('GISRC', None) and not self.database:
+            import grass.script as grass
+            con = grass.vector_db(self.vector).get(self.layer, None)
+            msg = '%s has no sqlite database connection.' % self.vector
+            assert con and con['driver'] == 'sqlite', msg
+            self.__dict__.update(
+                {k: con[k] for k in ['table', 'database', 'key']})
         else:
             assert self.database, 'Without project, database must be given.'
         self.table = self.table or nms[0]
-        self.database = self.database or dfdb
         self.key = self.key or 0
         # fill dataframe
         self.read()

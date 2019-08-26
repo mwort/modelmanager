@@ -49,7 +49,7 @@ class TestGrass(unittest.TestCase):
     def test_session(self):
         with GrassSession(self.project, mapset='PERMANENT') as grass:
             vects = grass.list_strings('vect')
-            self.assertIn(b'testvector@PERMANENT', vects)
+            self.assertIn('testvector@PERMANENT', vects)
         return
 
     def test_attribute_table(self):
