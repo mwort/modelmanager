@@ -17,6 +17,7 @@ class clone(object):
     """
     plugin = ['__call__']
     default_resourcedir = 'clones'
+    loaded_clones = {}
 
     def __init__(self, project):
         self.project = project
@@ -45,6 +46,8 @@ class clone(object):
         return namesdir
 
     def load_clone(self, name, **settings):
+        if name in self.loaded_clones:
+            return self.loaded_clones[name]
         # clone settings (non-persistent)
         kwargs = {'cloned': True,
                   'cloneparent': self.project,
@@ -56,7 +59,9 @@ class clone(object):
             pass
         if 'projectdir' not in settings:
             settings['projectdir'] = self._get_path_by_name(name)
-        return ClonedProject(**settings)
+        clone = ClonedProject(**settings)
+        self.loaded_clones[name] = clone
+        return clone
 
     def __getitem__(self, key):
         """
