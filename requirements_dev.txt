@@ -6,6 +6,6 @@ coverage
 twine
 
 # modelmanager plugin dependencies
-django==1.11.16
+django==1.11.23
 parse==1.8.2
 pandas==0.22.0
