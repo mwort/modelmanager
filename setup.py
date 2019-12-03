@@ -21,6 +21,7 @@ setup(
     version=__version__,
     description='A python package to manage your (scientific) model runs, input and output.',
     long_description=long_description,
+    long_description_content_type="text/markdown",
     url='https://github.com/mwort/modelmanager',
     download_url='https://github.com/mwort/modelmanager/tarball/' + __version__,
     license='BSD',

@@ -2,6 +2,7 @@ modelmanager
 ===============================
 
 Version number: 0.6
+
 Author: Michel Wortmann, Potsdam Institute of Climate Impact Research, Germany
 
 Overview
