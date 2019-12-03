@@ -3,6 +3,7 @@ A modelmanager plugin that enables project cloning.
 """
 import os
 import os.path as osp
+import errno
 import shutil
 from glob import glob
 
@@ -28,8 +29,12 @@ class clone(object):
                                         self.default_resourcedir)
             project.settings(clone_dir=self.resourcedir)
         # make sure it exists
-        if not osp.exists(self.resourcedir):
+        try:
             os.mkdir(self.resourcedir)
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
+            pass
         return
 
     def _get_path_by_name(self, name):
@@ -114,7 +119,7 @@ class clone(object):
             links = links + [resdir]  # copy and append!
         else:
             # ignore clones_dir
-            ignore = ignore + [prel(self.resourcedir, prodir)]
+            ignore = ignore + [pj(prel(self.resourcedir, prodir), '*')]
             if hasattr(self.project, 'browser'):
                 bdbpath = prel(self.project.browser.settings.dbpath, prodir)
                 ignore.append(bdbpath)
