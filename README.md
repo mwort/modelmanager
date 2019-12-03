@@ -1,7 +1,7 @@
 modelmanager
 ===============================
 
-Version number: 0.4
+Version number: 0.6
 Author: Michel Wortmann, Potsdam Institute of Climate Impact Research, Germany
 
 Overview
@@ -84,7 +84,7 @@ Navigate to localhost/admin in your browser.
 
 Contributing
 ------------
-Ideas and feature requests are collected in IDEAS.md.
+Bug reports, ideas and feature requests welcome on Github.
 
 ## Testing
 Run test in tests/ like this:
@@ -95,3 +95,10 @@ python -m unittest test_project.Settings  # just run Settings tests
 make clean                          # clean any leftover test output
 ```
 `make` should pass before submitting a pull/merge request.
+
+
+Releasing
+---------
+- add entry in `CHANGELOG.md`
+- change version number in `__init__.py` and `README.md`, tag and commit (`make version`)
+- build sdist and push to git and pypi (`make release`)
