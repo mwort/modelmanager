@@ -1,5 +1,10 @@
 # CHANGE LOG
 
+## v0.6 (2019-12-03)
+* Enable standalone use of `GrassAttributeTable, ReadWriteDataFrame, ProjectOrRunData`
+* Bug and stability fixes
+
+
 ## v0.5 (2018-12-14)
 * Allow parsing of --projectdir/-p as first argument of commandline
 * Various fixes, especially in clone plugin
