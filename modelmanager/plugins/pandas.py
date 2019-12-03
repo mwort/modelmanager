@@ -13,32 +13,37 @@ except ImportError:
 
 class ProjectOrRunData(pd.DataFrame):
     """
-    A representation of data read from either the SWIM project or Run instance.
+    A representation of data read from either the project, a Run or path.
     """
     path = None
     plugin = []
 
-    def __init__(self, projectorrun):
+    def __init__(self, projectrunorpath):
         from modelmanager.project import Project
         # init DataFrame
         pd.DataFrame.__init__(self)
         self.name = self.__class__.__name__
         # instantiated with project
-        if Project in projectorrun.__class__.__mro__:
-            self.project = projectorrun
+        if Project in projectrunorpath.__class__.__mro__:
+            self.project = projectrunorpath
             self.read = self.from_project
+            if self.path:
+                self.path = osp.join(self.project.projectdir, self.path)
         # instantiated with run
-        elif hasattr(projectorrun, 'files'):
+        elif hasattr(projectrunorpath, 'files'):
             from django.conf import settings
             self.project = settings.PROJECT
-            self.run = projectorrun
+            self.run = projectrunorpath
             self.path = self.find_file()
             self.read = self.from_run
+        elif type(projectrunorpath) == str:
+            self.path = projectrunorpath
+            self.read = self.from_project
+            self.project = None
         else:
             raise IOError('Run includes no saved files.')
         # read file
         if self.path:
-            self.path = osp.join(self.project.projectdir, self.path)
             self.from_path(self.path)
         return
 
@@ -119,15 +124,18 @@ class ReadWriteDataFrame(pd.DataFrame):
     path = None
     plugin = []
 
-    def __init__(self, project, read=True, **kwargs):
+    def __init__(self, projectorpath, read=True, **kwargs):
         # init DataFrame
         pd.DataFrame.__init__(self)
         self.name = self.__class__.__name__
-        self.project = project
-        self.path = osp.join(self.project.projectdir, self.path)
-        errmsg = self.name + ' file does not exist: ' + self.path
-        assert osp.exists(self.path), errmsg
+        if type(projectorpath) == str:
+            self.path, self.project = projectorpath, None
+        else:
+            self.project = projectorpath
+            self.path = osp.join(self.project.projectdir, self.path)
         if read:
+            errmsg = self.name + ' file does not exist: ' + self.path
+            assert osp.exists(self.path), errmsg
             pd.DataFrame.__init__(self, self.read(**kwargs))
         return
 
@@ -183,6 +191,7 @@ class R(object):
     The plugin makes the R object available as a project instance and sources
     all R source files in the project resourcedir.
     """
+
     def __init__(self, project=None):
         self.project = project
         self._initialize()
