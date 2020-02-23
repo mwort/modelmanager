@@ -74,12 +74,19 @@ def copy_resources(sourcedir, destinationdir, overwrite=False,
         subsetdirs = []
         for d in dirs:
             rdir = pj(rpath, d)
+            src = pj(path, d)
             dest = pj(destinationdir, rpath, d)
             if any(fnmatch.fnmatch(rdir, p) for p in ignorepatterns):
                 printverbose('Ignoring %s' % rdir)
             # dir to symlink with relative path
             elif any(fnmatch.fnmatch(rdir, p) for p in linkpatterns):
                 rsrc = osp.relpath(pj(path, d), osp.dirname(dest))
+                printverbose('Linking %s to %s' % (dest, rsrc))
+                os.symlink(rsrc, dest)
+            # copy/relink existing symlinks
+            elif osp.islink(src):
+                lnabs = osp.abspath(pj(path, os.readlink(src)))
+                rsrc = osp.relpath(lnabs, osp.dirname(dest))
                 printverbose('Linking %s to %s' % (dest, rsrc))
                 os.symlink(rsrc, dest)
             # create new dir
@@ -106,8 +113,7 @@ def copy_resources(sourcedir, destinationdir, overwrite=False,
                 os.symlink(rsrc, dest)
             # copy/relink existing symlinks
             elif osp.islink(src):
-                linkto = os.readlink(src)
-                lnabs = osp.abspath(pj(path, linkto))
+                lnabs = osp.abspath(pj(path, os.readlink(src)))
                 rsrc = osp.relpath(lnabs, osp.dirname(dest))
                 printverbose('Linking %s to %s' % (dest, rsrc))
                 os.symlink(rsrc, dest)
