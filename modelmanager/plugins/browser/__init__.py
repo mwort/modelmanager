@@ -11,6 +11,7 @@ import os
 import os.path as osp
 import sys
 import shutil
+import warnings
 
 try:
     import django
@@ -99,28 +100,54 @@ class browser(object):
                 rows = model.objects.all()
         return list(rows)
 
-    def insert(self, tablename, **modelfields):
+    def insert(self, tablename, try_save=10, **modelfields):
         """
         Insert entries into the table including related fields.
 
+        Arguments
+        ---------
+        tablename : str
+            Name of table/Django model to insert into.
+        try_save : int
+            Number of times to try and save the entries in the database in
+            case of database errors with a progressive wait. Some saves fail
+            due to concurrency or filesystem problems.
         **modelfields : Keyword arguments of table fields with appropriate
             values. Related table field values must be dicts or list of dicts.
         """
+        from django.db.utils import Error as DBError
+
         Model = self.models[tablename]
         # filter realted fields
         related = [(f, modelfields.pop(f.name))
                    for f in Model._meta.get_fields()
                    if any([f.one_to_many, f.one_to_one, f.many_to_many])
                    and f.name in modelfields]
-        # deal with main model
-        instance = Model(**modelfields)
-        with self.settings:
-            instance.save()
-        # insert related values
+        # check related before saving anything
         for field, value in related:
             em = 'Value of %s must be a dict or a list of dicts.' % field.name
-            assert type(value) in [list, dict], em
-            value = value if type(value) is list else [value]
+            assert type(value) is dict or hasattr(value, '__iter__'), em
+            if hasattr(value, '__iter__'):
+                assert all([type(e) is dict for e in value]), em
+
+        # try save main model
+        instance = Model(**modelfields)
+        with self.settings:
+            for i in range(try_save):
+                try:
+                    instance.save()
+                    break
+                except DBError as e:
+                    import time
+                    warnings.warn(
+                        'Encountered database error (%s) when trying ' % e +
+                        'to save a %s. Will try again ' % tablename +
+                        'in %i secs.' % i, RuntimeWarning)
+                    time.sleep(i)
+
+        # insert related values
+        for field, value in related:
+            value = value if hasattr(value, '__iter__') else [value]
             relm = field.related_model._meta.model_name
             for rd in value:
                 assert type(rd) is dict, em
