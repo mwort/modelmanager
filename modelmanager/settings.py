@@ -36,20 +36,36 @@ class SettingsManager(object):
         self.register_plugin(project.__class__, '')
         return
 
-    def load(self, defaults={}, **override_settings):
+    def load(self, defaults={}, resourcedir=True, **override_settings):
         """
         (Re)load and override project settings.
 
         Reads the settings from the settings file and attaches them to the
         project. Can be used to reload the settings and override settings that
         are used when initialising plugins.
+
+        Arguments
+        ---------
+        defaults : dict
+            Settings used if neither set in override_settings or settings
+            file.
+        resourcedir : bool
+            If True, the resource directory is assumed to be present in the
+            project dir and a settings file is searched and loaded. If False,
+            only the default and overide_settings are loaded and the
+            resourcedir is set to None.
+        override_settings : dict
+            Any settings to override those from default or resources.
         """
-        self.file = self._find_settings()
-        self.module = utils.load_module_path(self.file,
-                                             remove_byte_version=True)
-        # resourcedir cant be overriden
-        override_settings["resourcedir"] = osp.dirname(self.file)
-        settings = load_settings(self.file)
+        settings = {'resourcedir': None}
+        if resourcedir:
+            self.file = self._find_settings()
+            self.module = utils.load_module_path(
+                self.file, remove_byte_version=True)
+            # resourcedir cant be overriden
+            override_settings["resourcedir"] = osp.dirname(self.file)
+            settings = load_settings(self.file)
+
         settings.update(override_settings)
         # set defaults
         for k, v in defaults.items():
@@ -59,27 +75,8 @@ class SettingsManager(object):
         return
 
     def _find_settings(self):
-        from modelmanager.project import ProjectDoesNotExist
-
-        # search settings file in any directory in this directory
-        settings_dotglob = osp.join(self._project.projectdir, '.*',
-                                    self.settings_file_name)
-        settings_glob = osp.join(self._project.projectdir, '*',
-                                 self.settings_file_name)
-
-        sfp = glob(settings_glob) + glob(settings_dotglob)
-        # warn if other than 1
-        if len(sfp) == 0:
-            errmsg = 'Cant find a modelmanager settings file under:\n'
-            errmsg += settings_glob + '\n'
-            errmsg += 'You can initialise a new project here using: \n'
-            errmsg += 'modelmanager init \n'
-            raise ProjectDoesNotExist(errmsg)
-        elif len(sfp) > 1:
-            msg = 'Found multiple modelmanager settings files (using *):\n'
-            msg += '*'+'\n'.join(sfp)
-            print(msg)
-        return osp.abspath(sfp[0])
+        return find_settings_file(self._project.projectdir,
+                                  self.settings_file_name)
 
     def __call__(self, *objects, **settings):
         """
@@ -325,6 +322,28 @@ def load_settings(pathormodule):
     settings = {n: obj for n, obj in inspect.getmembers(module)
                 if not (inspect.ismodule(obj) or n.startswith('_'))}
     return settings
+
+
+def find_settings_file(projectdir, name='settings.py'):
+    from modelmanager.project import ProjectDoesNotExist
+
+    # search settings file in any directory in this directory
+    settings_dotglob = osp.join(projectdir, '.*', name)
+    settings_glob = osp.join(projectdir, '*', name)
+
+    sfp = glob(settings_glob) + glob(settings_dotglob)
+    # warn if other than 1
+    if len(sfp) == 0:
+        errmsg = 'Cant find a modelmanager settings file under:\n'
+        errmsg += settings_glob + '\n'
+        errmsg += 'You can initialise a new project here using: \n'
+        errmsg += 'modelmanager init \n'
+        raise ProjectDoesNotExist(errmsg)
+    elif len(sfp) > 1:
+        msg = 'Found multiple modelmanager settings files (using *):\n'
+        msg += '*'+'\n'.join(sfp)
+        print(msg)
+    return osp.abspath(sfp[0])
 
 
 def sort_settings(settings):
