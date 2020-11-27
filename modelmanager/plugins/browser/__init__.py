@@ -68,12 +68,15 @@ class browser(object):
             management.call_command(*args, **kwargs)
         return
 
-    def start(self):
+    def start(self, addrport=None):
         """
         Start the Django browser app. Navigate to localhost:8000/admin in your
         browser. To quit the browser server, do control-c on the console.
+
+        addrport : str
+            Bind server to a non-default address:port.
         """
-        self.manage('runserver')
+        self.manage('runserver', *([addrport] if addrport else []))
         return
 
     @property
