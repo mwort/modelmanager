@@ -1,5 +1,11 @@
 # CHANGE LOG
 
+## v0.7 (2021-03-19)
+* Allow project loading without resource dir (`resourcedir=False`).
+* Allow non-default address:port settings to browser start.
+* Bug and stability fixes.
+
+
 ## v0.6 (2019-12-03)
 * Enable standalone use of `GrassAttributeTable, ReadWriteDataFrame, ProjectOrRunData`
 * Bug and stability fixes
