@@ -391,7 +391,7 @@ def parse_settings(function):
             project = inst
         elif hasattr(inst, 'project'):
             project = inst.project
-            prefix = inst.__class__.__name__.lower() + '_'
+            prefix = inst.__class__.__name__ + '_'
         else:
             em = ('%s is not a Project instance or doesnt have a project '
                   'attribute.')
