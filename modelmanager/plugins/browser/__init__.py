@@ -130,7 +130,7 @@ class browser(object):
         for field, value in related:
             em = 'Value of %s must be a dict or a list of dicts.' % field.name
             assert type(value) is dict or hasattr(value, '__iter__'), em
-            if hasattr(value, '__iter__'):
+            if hasattr(value, '__iter__') and type(value) is not dict:
                 assert all([type(e) is dict for e in value]), em
 
         # try save main model
@@ -150,7 +150,7 @@ class browser(object):
 
         # insert related values
         for field, value in related:
-            value = value if hasattr(value, '__iter__') else [value]
+            value = value if hasattr(value, '__iter__') and type(value) is not dict else [value]
             relm = field.related_model._meta.model_name
             for rd in value:
                 assert type(rd) is dict, em
