@@ -239,19 +239,29 @@ class FunctionInfo(object):
             args = fspec.args
             self.defaults = list(fspec.defaults or [])
         else:
-            fspec = inspect.getfullargspec(function)
-            self.kwargs = fspec.varkw
-            args = fspec.args + fspec.kwonlyargs
-            kwodef = [fspec.kwonlydefaults[k] for k in fspec.kwonlyargs]
-            self.defaults = list(fspec.defaults or []) + kwodef
-            self.annotations = fspec.annotations
-
+            try:
+                fspec = inspect.getfullargspec(function)
+                self.kwargs = fspec.varkw
+                args = fspec.args + fspec.kwonlyargs
+                kwodef = [fspec.kwonlydefaults[k] for k in fspec.kwonlyargs]
+                self.annotations = fspec.annotations
+                self.defaults = list(fspec.defaults or []) + kwodef
+                self.varargs = fspec.varargs
+            except TypeError:
+                fspec = None
+                self.kwargs = []
+                args = []
+                kwodef = []
+                self.defaults = []
+                self.varargs = []
         self.doc = inspect.cleandoc(function.__doc__ or '')
         self.__doc__ = self.doc
         self.name = function.__name__
-        self.varargs = fspec.varargs
         self.function = function
-        code, self.firstcodeline = inspect.getsourcelines(function)
+        try:
+            code, self.firstcodeline = inspect.getsourcelines(function)
+        except TypeError:
+            code, self.firstcodeline = [], None
         self.code = "".join(code)
         nposargs = len(args) - len(self.defaults)
         self.positional_arguments = list(args)[:nposargs]
