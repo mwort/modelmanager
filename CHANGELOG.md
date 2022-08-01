@@ -1,5 +1,10 @@
 # CHANGE LOG
 
+## development
+* settings.FunctionInfo: support project functions of builtin type.
+* Stability fixes.
+
+
 ## v0.7 (2021-03-19)
 * Allow project loading without resource dir (`resourcedir=False`).
 * Allow non-default address:port settings to browser start.
