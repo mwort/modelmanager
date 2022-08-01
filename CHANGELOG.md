@@ -1,6 +1,7 @@
 # CHANGE LOG
 
 ## development
+* Support GRASS version 8
 * settings.FunctionInfo: support project functions of builtin type.
 * Stability fixes.
 

@@ -70,7 +70,7 @@ class GrassSession(object):
         errmsg = 'location %s doesnt exist.' % location
         assert osp.exists(osp.join(gisdb, location)), errmsg
         self.gisdb, self.location, self.mapset = gisdb, location, mapset
-        # query GRASS 7 itself for its GISBASE
+        # query GRASS itself for its GISBASE
         errmsg = "%s not found or not executable." % grassbin
         assert self._which(grassbin), errmsg
         startcmd = [grassbin, '--config', 'path']
@@ -78,10 +78,15 @@ class GrassSession(object):
                              stderr=subprocess.PIPE)
         out, err = p.communicate()
         if p.returncode != 0:
-            raise ImportError("ERROR: Cannot find GRASS GIS 7 start script "
+            raise ImportError("ERROR: Cannot find GRASS GIS start script "
                               "using %s. Try passing correct grassbin."
                               % (' '.join(startcmd)))
         self.gisbase = out.decode().strip().split('\n')[-1]
+        vercmd = [grassbin, '--config', 'version']
+        p = subprocess.Popen(vercmd, shell=False, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        self.gisversion = [int(s) for s in out.decode().strip().split('.')]
         userdir = osp.expanduser("~")
         self.addonpath = osp.join(userdir, '.grass7', 'addons', 'scripts')
         self.python_package = os.path.join(self.gisbase, "etc", "python")
@@ -113,8 +118,16 @@ class GrassSession(object):
         from grass.script import setup
 
         self.grass = grass
-        self.rcfile = setup.init(self.gisbase, self.gisdb,
-                                 self.location, 'PERMANENT')
+        # init depends of grass version
+        if self.gisversion[0] == 7:
+            self.rcfile = setup.init(self.gisbase, self.gisdb,
+                                    self.location, 'PERMANENT')
+        elif self.gisversion[0] == 8:
+            self.rcfile = setup.init(self.gisdb, self.location,
+                                     'PERMANENT', self.gisbase)
+        else:
+            raise ImportError('Cannot initialise GRASS version {}.'
+                              'Must be either 7.x.x or 8.x.x.'.format(self.gisversion))
         # always create mapset if it doesnt exist
         if self.mapset != 'PERMANENT':
             grass.run_command('g.mapset', mapset=self.mapset, flags='c',

@@ -45,6 +45,13 @@ class TestGrass(unittest.TestCase):
             f.write("0|1|s1 \n 1|0|s2")
         subprocess.call(['grass', locp+'/PERMANENT', '--exec', 'v.in.ascii',
                          'in='+vectorascii, 'out=testvector', '--q'])
+    
+    def test_grassversion(self):
+        # basically assures that GrassSession.setup() works as expected
+        with GrassSession(self.project, mapset='PERMANENT') as grass:
+            ver = int(grass.version()['version'].split('.')[0])
+            self.assertIn(ver, [7,8])
+        return
 
     def test_session(self):
         with GrassSession(self.project, mapset='PERMANENT') as grass:
