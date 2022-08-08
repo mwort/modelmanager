@@ -87,8 +87,13 @@ class GrassSession(object):
                              stderr=subprocess.PIPE)
         out, err = p.communicate()
         self.gisversion = [int(s) for s in out.decode().strip().split('.')]
+        if self.gisversion[0] not in [7,8]:
+            raise ImportError('GRASS version {} is not supported. '
+                              'Must be either 7.x.x or 8.x.x.'
+                              ''.format('.'.join(str(v) for v in self.gisversion)))
         userdir = osp.expanduser("~")
-        self.addonpath = osp.join(userdir, '.grass7', 'addons', 'scripts')
+        self.addonpath = osp.join(userdir, '.grass'+str(self.gisversion[0]),
+                                  'addons', 'scripts')
         self.python_package = os.path.join(self.gisbase, "etc", "python")
 
         self.overwrite = GrassOverwrite(overwrite, verbose=verbose)
@@ -120,14 +125,9 @@ class GrassSession(object):
         self.grass = grass
         # init depends of grass version
         if self.gisversion[0] == 7:
-            self.rcfile = setup.init(self.gisbase, self.gisdb,
-                                    self.location, 'PERMANENT')
+            setup.init(self.gisbase, self.gisdb, self.location, 'PERMANENT')
         elif self.gisversion[0] == 8:
-            self.rcfile = setup.init(self.gisdb, self.location,
-                                     'PERMANENT', self.gisbase)
-        else:
-            raise ImportError('Cannot initialise GRASS version {}.'
-                              'Must be either 7.x.x or 8.x.x.'.format(self.gisversion))
+            setup.init(self.gisdb, self.location, 'PERMANENT', self.gisbase)
         # always create mapset if it doesnt exist
         if self.mapset != 'PERMANENT':
             grass.run_command('g.mapset', mapset=self.mapset, flags='c',
@@ -143,11 +143,12 @@ class GrassSession(object):
         env = self.grass.gisenv()
         lf = osp.join(env['GISDBASE'], env['LOCATION_NAME'], env['MAPSET'],
                       '.gislock')
-        for f in [lf, self.rcfile]:
-            try:
-                os.remove(f)
-            except OSError:
-                pass
+        try:
+            os.remove(lf)
+        except OSError:
+            pass
+        from grass.script import utils as gutils
+        gutils.try_remove(os.environ["GISRC"])
         # clean envs
         sys.path = [p for p in sys.path if p is not self.python_package]
         ps = os.pathsep
