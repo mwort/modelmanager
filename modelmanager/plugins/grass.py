@@ -333,8 +333,6 @@ class GrassModulePlugin(object):
                     args[p.name] = moduleargs[p.name]
                 elif p.name in arg_setting:
                     args[p.name] = arg_setting[p.name]
-                elif hasattr(self, p.name):
-                    args[p.name] = getattr(self, p.name)
                 elif p.required and not p.default:
                     em = p.name + ' argument is required by ' + self.module
                     raise AttributeError(em)
