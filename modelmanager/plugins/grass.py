@@ -70,7 +70,7 @@ class GrassSession(object):
         errmsg = 'location %s doesnt exist.' % location
         assert osp.exists(osp.join(gisdb, location)), errmsg
         self.gisdb, self.location, self.mapset = gisdb, location, mapset
-        # query GRASS 7 itself for its GISBASE
+        # query GRASS itself for its GISBASE
         errmsg = "%s not found or not executable." % grassbin
         assert self._which(grassbin), errmsg
         startcmd = [grassbin, '--config', 'path']
@@ -78,12 +78,22 @@ class GrassSession(object):
                              stderr=subprocess.PIPE)
         out, err = p.communicate()
         if p.returncode != 0:
-            raise ImportError("ERROR: Cannot find GRASS GIS 7 start script "
+            raise ImportError("ERROR: Cannot find GRASS GIS start script "
                               "using %s. Try passing correct grassbin."
                               % (' '.join(startcmd)))
         self.gisbase = out.decode().strip().split('\n')[-1]
+        vercmd = [grassbin, '--config', 'version']
+        p = subprocess.Popen(vercmd, shell=False, stdout=subprocess.PIPE,
+                             stderr=subprocess.PIPE)
+        out, err = p.communicate()
+        self.gisversion = [int(s) for s in out.decode().strip().split('.')]
+        if self.gisversion[0] not in [7,8]:
+            raise ImportError('GRASS version {} is not supported. '
+                              'Must be either 7.x.x or 8.x.x.'
+                              ''.format('.'.join(str(v) for v in self.gisversion)))
         userdir = osp.expanduser("~")
-        self.addonpath = osp.join(userdir, '.grass7', 'addons', 'scripts')
+        self.addonpath = osp.join(userdir, '.grass'+str(self.gisversion[0]),
+                                  'addons', 'scripts')
         self.python_package = os.path.join(self.gisbase, "etc", "python")
 
         self.overwrite = GrassOverwrite(overwrite, verbose=verbose)
@@ -113,8 +123,11 @@ class GrassSession(object):
         from grass.script import setup
 
         self.grass = grass
-        self.rcfile = setup.init(self.gisbase, self.gisdb,
-                                 self.location, 'PERMANENT')
+        # init depends of grass version
+        if self.gisversion[0] == 7:
+            setup.init(self.gisbase, self.gisdb, self.location, 'PERMANENT')
+        elif self.gisversion[0] == 8:
+            setup.init(self.gisdb, self.location, 'PERMANENT', self.gisbase)
         # always create mapset if it doesnt exist
         if self.mapset != 'PERMANENT':
             grass.run_command('g.mapset', mapset=self.mapset, flags='c',
@@ -130,11 +143,12 @@ class GrassSession(object):
         env = self.grass.gisenv()
         lf = osp.join(env['GISDBASE'], env['LOCATION_NAME'], env['MAPSET'],
                       '.gislock')
-        for f in [lf, self.rcfile]:
-            try:
-                os.remove(f)
-            except OSError:
-                pass
+        try:
+            os.remove(lf)
+        except OSError:
+            pass
+        from grass.script import utils as gutils
+        gutils.try_remove(os.environ["GISRC"])
         # clean envs
         sys.path = [p for p in sys.path if p is not self.python_package]
         ps = os.pathsep
@@ -319,8 +333,6 @@ class GrassModulePlugin(object):
                     args[p.name] = moduleargs[p.name]
                 elif p.name in arg_setting:
                     args[p.name] = arg_setting[p.name]
-                elif hasattr(self, p.name):
-                    args[p.name] = getattr(self, p.name)
                 elif p.required and not p.default:
                     em = p.name + ' argument is required by ' + self.module
                     raise AttributeError(em)
