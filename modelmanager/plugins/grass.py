@@ -86,8 +86,8 @@ class GrassSession(object):
         p = subprocess.Popen(vercmd, shell=False, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
         out, err = p.communicate()
-        self.gisversion = [int(s) for s in out.decode().strip().split('.')]
-        if self.gisversion[0] not in [7,8]:
+        self.gisversion = [s for s in out.decode().strip().split('.')]
+        if self.gisversion[0] not in "7 8":
             raise ImportError('GRASS version {} is not supported. '
                               'Must be either 7.x.x or 8.x.x.'
                               ''.format('.'.join(str(v) for v in self.gisversion)))
