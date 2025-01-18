@@ -23,6 +23,28 @@ from django.apps import apps as djapps
 from modelmanager import utils
 
 
+def try_again(function):
+    """Decorator to try again calling function after a DBError."""
+    try_save = 10
+
+    def try_again_function(*args, **kwargs):
+        from django.db.utils import Error as DBError
+
+        for i in range(try_save):
+            try:
+                return function(*args, **kwargs)
+            except DBError as e:
+                import time
+                if i > 1:
+                    warnings.warn(
+                        'Encountered database error (%r). ' % e +
+                        'Will try again in %i secs.' % i, RuntimeWarning)
+                time.sleep(i)
+                err = e
+        raise err
+    return try_again_function
+
+
 class browser(object):
 
     def __init__(self, project):
@@ -103,7 +125,8 @@ class browser(object):
                 rows = model.objects.all()
         return list(rows)
 
-    def insert(self, tablename, try_save=10, **modelfields):
+    @try_again
+    def insert(self, tablename, **modelfields):
         """
         Insert entries into the table including related fields.
 
@@ -111,14 +134,9 @@ class browser(object):
         ---------
         tablename : str
             Name of table/Django model to insert into.
-        try_save : int
-            Number of times to try and save the entries in the database in
-            case of database errors with a progressive wait. Some saves fail
-            due to concurrency or filesystem problems.
         **modelfields : Keyword arguments of table fields with appropriate
             values. Related table field values must be dicts or list of dicts.
         """
-        from django.db.utils import Error as DBError
 
         Model = self.models[tablename]
         # filter realted fields
@@ -136,17 +154,7 @@ class browser(object):
         # try save main model
         instance = Model(**modelfields)
         with self.settings:
-            for i in range(try_save):
-                try:
-                    instance.save()
-                    break
-                except DBError as e:
-                    import time
-                    warnings.warn(
-                        'Encountered database error (%s) when trying ' % e +
-                        'to save a %s. Will try again ' % tablename +
-                        'in %i secs.' % i, RuntimeWarning)
-                    time.sleep(i)
+            instance.save()
 
         # insert related values
         for field, value in related:
