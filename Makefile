@@ -26,10 +26,10 @@ version:
 	git tag $$new
 
 release:
-	python setup.py sdist
+	#python setup.py sdist
 	git push
 	git push --tags
-	twine upload dist/*
+	#twine upload dist/*  # doesnt work anymore, now done by .github/workflows
 
 
 docs:
