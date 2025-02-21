@@ -73,6 +73,7 @@ class GrassSession(object):
         # query GRASS itself for its GISBASE
         errmsg = "%s not found or not executable." % grassbin
         assert self._which(grassbin), errmsg
+        self.grassbin = grassbin
         startcmd = [grassbin, '--config', 'path']
         p = subprocess.Popen(startcmd, shell=False, stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE)
@@ -124,10 +125,10 @@ class GrassSession(object):
 
         self.grass = grass
         # init depends of grass version
-        if self.gisversion[0] == 7:
+        if self.gisversion[0] == "7":
             setup.init(self.gisbase, self.gisdb, self.location, 'PERMANENT')
-        elif self.gisversion[0] == 8:
-            setup.init(self.gisdb, self.location, 'PERMANENT', self.gisbase)
+        elif self.gisversion[0] == "8":
+            setup.init(self.gisdb, self.location, 'PERMANENT', self.grassbin)
         # always create mapset if it doesnt exist
         if self.mapset != 'PERMANENT':
             grass.run_command('g.mapset', mapset=self.mapset, flags='c',
