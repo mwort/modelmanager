@@ -269,7 +269,9 @@ class GrassAttributeTable(DataFrame):
         with self.dbconnection as con:
             tbl = pd.read_sql('select %s from %s;' % (cols, self.table), con)
         self.key = tbl.columns[self.key] if type(self.key) == int else self.key
-        tbl.set_index(self.key, inplace=True, verify_integrity=True)
+        tbl.set_index(self.key, inplace=True)
+        if not tbl.index.is_unique:
+            raise ValueError("Index column %r has duplicate values." % self.key)
         # fill DataFrame
         super(GrassAttributeTable, self).__init__(tbl)
         return
@@ -285,7 +287,9 @@ class GrassAttributeTable(DataFrame):
         with self.dbconnection as con:
             if self.subset_columns:  # read other columns
                 tbl = pd.read_sql('select * from %s;' % self.table, con)
-                tbl.set_index(self.key, inplace=True, verify_integrity=True)
+                tbl.set_index(self.key, inplace=True)
+                if not tbl.index.is_unique:
+                    raise ValueError("Index column %r has duplicate values." % self.key)
                 tbl[cleantbl.columns] = cleantbl
                 cleantbl = tbl
             cleantbl.to_sql(self.table, con, if_exists='replace')
